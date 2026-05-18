@@ -11,6 +11,7 @@ const ACCENT_MAP = {
   cyan:   { hex: '00d4ff', textHex: '000000' },
   green:  { hex: '00e676', textHex: '000000' },
   purple: { hex: '8b5cf6', textHex: 'ffffff' },
+  gold:   { hex: 'ffd700', textHex: '000000' },
 };
 
 async function uploadImage(buffer, folder = 'banner-gen/generated') {

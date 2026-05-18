@@ -263,6 +263,7 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .color-card:has(input[value="cyan"]:checked) .color-swatch { box-shadow: 0 0 12px #00d4ff; }
 .color-card:has(input[value="green"]:checked) .color-swatch { box-shadow: 0 0 12px #00e676; }
 .color-card:has(input[value="purple"]:checked) .color-swatch { box-shadow: 0 0 12px #8b5cf6; }
+.color-card:has(input[value="gold"]:checked) .color-swatch { box-shadow: 0 0 12px #ffd700; }
 
 .color-name { font-size: 12px; color: var(--text-muted); }
 

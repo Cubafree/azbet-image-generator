@@ -59,6 +59,10 @@ Background gradient accent: very dark green-black (#050f0a) with emerald rim lig
 Primary accent: #8b5cf6 (violet purple).
 Apply to: particle effects, neon glow around objects, light trails, gem colors (amethyst/crystal), energy emanating from casino/sport elements.
 Background gradient accent: near-black with deep purple (#1a0533) with violet rim lighting on subject.`,
+    gold: `ACCENT COLOR SYSTEM — LUXURY GOLD:
+Primary accent: #ffd700 (rich gold).
+Apply to: particle effects, golden glow around objects, light trails, gem colors (topaz/amber/gold), energy emanating from casino/sport elements. Floating gold coins should have an intensified warm glow.
+Background gradient accent: very dark brown-black (#0d0800) with warm amber/gold rim lighting on subject. Overall mood: opulent, premium, Middle-Eastern luxury.`,
   },
 
   COMPOSITION_RULES: `COMPOSITION:

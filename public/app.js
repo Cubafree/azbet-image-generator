@@ -42,7 +42,7 @@ async function generate() {
     : null;
 
   if (!bannerText) {
-    showToast('Banner text is required', 'error');
+    showToast('Текст баннера обязателен', 'error');
     return;
   }
 
@@ -58,12 +58,12 @@ async function generate() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Generation failed');
+    if (!res.ok) throw new Error(data.error || 'Ошибка генерации');
 
     currentGenerationId = data.generation.id;
     showPreview(data.generation);
     loadHistory();
-    showToast('Image generated and sent to Telegram ✓', 'success');
+    showToast('Изображение сгенерировано и отправлено в Telegram ✓', 'success');
   } catch (err) {
     showError(err.message);
   } finally {
@@ -79,7 +79,7 @@ async function confirmGen() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     loadHistory();
-    showToast('Banner confirmed ✓', 'success');
+    showToast('Баннер подтверждён ✓', 'success');
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -94,11 +94,11 @@ async function regenerate() {
   try {
     const res = await fetch(`/api/generate/${currentGenerationId}/regenerate`, { method: 'POST' });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Regeneration failed');
+    if (!res.ok) throw new Error(data.error || 'Ошибка перегенерации');
     currentGenerationId = data.generation.id;
     showPreview(data.generation);
     loadHistory();
-    showToast('New version generated ✓', 'success');
+    showToast('Новая версия сгенерирована ✓', 'success');
   } catch (err) {
     showError(err.message);
   } finally {
@@ -118,7 +118,7 @@ async function loadHistory() {
 function renderTable(rows) {
   const tbody = document.getElementById('historyBody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">No generations yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Генераций пока нет</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map((g) => `
@@ -171,7 +171,7 @@ function hideError() {
 
 function copyUrl(elId) {
   const url = document.getElementById(elId).href;
-  navigator.clipboard.writeText(url).then(() => showToast('URL copied!', 'success'));
+  navigator.clipboard.writeText(url).then(() => showToast('URL скопирован!', 'success'));
 }
 
 function showToast(msg, type = 'success') {

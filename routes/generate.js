@@ -11,7 +11,7 @@ const VALID = {
   country: ['egypt', 'morocco', 'algeria', 'libya'],
   subject: ['woman', 'man', 'object'],
   sportType: ['football', 'tennis', 'basketball', 'general'],
-  accentColor: ['cyan', 'green', 'purple'],
+  accentColor: ['cyan', 'green', 'purple', 'gold'],
 };
 
 function validate(body) {
