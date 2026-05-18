@@ -90,7 +90,12 @@ DO NOT render any text, numbers, words, or logos anywhere in the image.`,
 
 const CLOUDINARY_CONFIG = {
   logoPublicId: process.env.CLOUDINARY_LOGO_PUBLIC_ID || 'banner-gen/logo',
-  framePublicId: process.env.CLOUDINARY_FRAME_PUBLIC_ID || 'banner-gen/promo-frame',
+  framePublicIds: {
+    cyan:   process.env.CLOUDINARY_FRAME_CYAN_PUBLIC_ID   || 'banner-gen/frame-cyan',
+    green:  process.env.CLOUDINARY_FRAME_GREEN_PUBLIC_ID  || 'banner-gen/frame-green',
+    purple: process.env.CLOUDINARY_FRAME_PURPLE_PUBLIC_ID || 'banner-gen/frame-purple',
+    gold:   process.env.CLOUDINARY_FRAME_GOLD_PUBLIC_ID   || 'banner-gen/frame-gold',
+  },
   textFont: process.env.CLOUDINARY_TEXT_FONT || 'Arial',
   textSize: process.env.CLOUDINARY_TEXT_SIZE || '52',
   textColor: process.env.CLOUDINARY_TEXT_COLOR || 'ffffff',

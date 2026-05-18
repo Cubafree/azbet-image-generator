@@ -50,6 +50,18 @@ function buildOverlayUrl(imagePublicId, params) {
 
   const t = []; // transformation steps
 
+  // ── LAYER 0 — Bottom frame image (per accent color) ─────────────────────────
+  const framePublicId = CLOUDINARY_CONFIG.framePublicIds?.[accentColor];
+  if (framePublicId) {
+    t.push({
+      overlay: framePublicId.replace(/\//g, ':'),
+      gravity: 'south',
+      width: 1.0,
+      flags: 'relative',
+    });
+    t.push({ flags: 'layer_apply' });
+  }
+
   // ── LAYER 1 — Line 1: plain white text, no background ──────────────────────
   if (line1?.trim()) {
     t.push({
