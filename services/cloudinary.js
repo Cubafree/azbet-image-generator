@@ -60,11 +60,11 @@ function buildOverlayUrl(imagePublicId, params) {
 
   const t = [];
 
-  // ── LAYER 0 — Per-color badges panel (gravity south, full width) ────────────
+  // ── LAYER 0 — Per-color badges panel (gravity south, 60% width, lifted) ──────
   const framePublicId = framePublicIds?.[accentColor];
   if (framePublicId) {
-    t.push({ overlay: cldId(framePublicId), width: 1024 });
-    t.push({ flags: 'layer_apply', gravity: 'south', y: 0 });
+    t.push({ overlay: cldId(framePublicId), width: 614 });
+    t.push({ flags: 'layer_apply', gravity: 'south', y: 80 });
   }
 
   // ── LAYER 1 — Logo (top center) ──────────────────────────────────────────────
@@ -78,7 +78,7 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({
       overlay: {
         font_family: pickFont(line1),
-        font_size: 56,
+        font_size: 52,
         font_weight: 'bold',
         text: line1.trim(),
       },
@@ -86,7 +86,7 @@ function buildOverlayUrl(imagePublicId, params) {
       width: 900,
       crop: 'fit',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 150 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 185 });
   }
 
   // ── LAYER 3 — Line 2: plashka, −5° tilt (Oswald ExtraBold / Cairo ExtraBold) ─
@@ -94,7 +94,7 @@ function buildOverlayUrl(imagePublicId, params) {
     const step = {
       overlay: {
         font_family: pickFont(line2),
-        font_size: 72,
+        font_size: 68,
         font_weight: 'extrabold',
         text: line2.trim(),
       },
@@ -115,7 +115,7 @@ function buildOverlayUrl(imagePublicId, params) {
     }
 
     t.push(step);
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 245 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 300 });
   }
 
   // ── LAYER 4 — Line 3: pill (Cairo Bold) ──────────────────────────────────────
@@ -123,7 +123,7 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 52,
+        font_size: 48,
         font_weight: 'bold',
         text: line3.trim(),
       },
@@ -134,7 +134,7 @@ function buildOverlayUrl(imagePublicId, params) {
       width: 800,
       crop: 'fit',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 370 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 440 });
   }
 
   return cloudinary.url(imagePublicId, {
