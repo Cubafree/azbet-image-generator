@@ -60,54 +60,48 @@ function buildOverlayUrl(imagePublicId, params) {
 
   const t = [];
 
-  // ── LAYER 0 — Per-color badges panel (Google Play + App Store, gravity south) ─
+  // ── LAYER 0 — Per-color badges panel (gravity south, full width) ────────────
   const framePublicId = framePublicIds?.[accentColor];
   if (framePublicId) {
-    t.push({
-      overlay: cldId(framePublicId),
-      gravity: 'south',
-      width: 1.0,
-      flags: 'relative',
-    });
-    t.push({ flags: 'layer_apply' });
+    t.push({ overlay: cldId(framePublicId), width: 1024 });
+    t.push({ flags: 'layer_apply', gravity: 'south', y: 0 });
   }
 
-  // ── LAYER 2 — Logo (top center) ──────────────────────────────────────────────
+  // ── LAYER 1 — Logo (top center) ──────────────────────────────────────────────
   if (logoPublicId) {
-    t.push({
-      overlay: cldId(logoPublicId),
-      gravity: 'north',
-      width: 260,
-      y: 55,
-    });
-    t.push({ flags: 'layer_apply' });
+    t.push({ overlay: cldId(logoPublicId), width: 240 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 55 });
   }
 
-  // ── LAYER 3 — Line 1: plain white text (Oswald Bold 700 / Cairo Bold) ────────
+  // ── LAYER 2 — Line 1: plain white text (Oswald Bold 700 / Cairo Bold) ────────
   if (line1?.trim()) {
     t.push({
       overlay: {
         font_family: pickFont(line1),
-        font_size: 64,
+        font_size: 56,
         font_weight: 'bold',
         text: line1.trim(),
       },
       color: 'rgb:ffffff',
+      width: 900,
+      crop: 'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', y: 150 });
   }
 
-  // ── LAYER 4 — Line 2: plashka, −5° tilt (Oswald ExtraBold / Cairo ExtraBold) ─
+  // ── LAYER 3 — Line 2: plashka, −5° tilt (Oswald ExtraBold / Cairo ExtraBold) ─
   if (line2?.trim()) {
     const step = {
       overlay: {
         font_family: pickFont(line2),
-        font_size: 84,
+        font_size: 72,
         font_weight: 'extrabold',
         text: line2.trim(),
       },
+      width: 920,
+      crop: 'fit',
       radius: 28,
-      angle: -5,   // slight counterclockwise tilt, matching example
+      angle: -5,
     };
 
     if (plashkaStyle === 'bordered') {
@@ -124,12 +118,12 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', y: 245 });
   }
 
-  // ── LAYER 5 — Line 3: pill (Cairo Bold — works for Arabic + Latin numbers) ───
+  // ── LAYER 4 — Line 3: pill (Cairo Bold) ──────────────────────────────────────
   if (line3?.trim()) {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 54,
+        font_size: 52,
         font_weight: 'bold',
         text: line3.trim(),
       },
@@ -137,6 +131,8 @@ function buildOverlayUrl(imagePublicId, params) {
       background: 'rgb:111111',
       border: `3px_solid_rgb:${hex}`,
       radius: 24,
+      width: 800,
+      crop: 'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', y: 370 });
   }
