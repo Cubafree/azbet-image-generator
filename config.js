@@ -90,7 +90,6 @@ DO NOT render any text, numbers, words, or logos anywhere in the image.`,
 
 const CLOUDINARY_CONFIG = {
   logoPublicId:   process.env.CLOUDINARY_LOGO_PUBLIC_ID   || 'banner-gen/logo',
-  badgesPublicId: process.env.CLOUDINARY_BADGES_PUBLIC_ID || 'banner-gen/badges',
   framePublicIds: {
     cyan:   process.env.CLOUDINARY_FRAME_CYAN_PUBLIC_ID   || 'banner-gen/frame-cyan',
     green:  process.env.CLOUDINARY_FRAME_GREEN_PUBLIC_ID  || 'banner-gen/frame-green',

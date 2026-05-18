@@ -56,23 +56,11 @@ function buildOverlayUrl(imagePublicId, params) {
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
-  const { logoPublicId, badgesPublicId, framePublicIds } = CLOUDINARY_CONFIG;
+  const { logoPublicId, framePublicIds } = CLOUDINARY_CONFIG;
 
   const t = [];
 
-  // ── LAYER 0 — Badges SVG (Google Play + App Store combined, shared) ──────────
-  // Sits at very bottom; applied first so frame can overlay on top of it if needed
-  if (badgesPublicId) {
-    t.push({
-      overlay: cldId(badgesPublicId),
-      gravity: 'south',
-      width: 1060,   // nearly full 1080px width
-      y: 0,
-    });
-    t.push({ flags: 'layer_apply' });
-  }
-
-  // ── LAYER 1 — Per-color frame SVG (decorative bottom shape) ─────────────────
+  // ── LAYER 0 — Per-color badges panel (Google Play + App Store, gravity south) ─
   const framePublicId = framePublicIds?.[accentColor];
   if (framePublicId) {
     t.push({
