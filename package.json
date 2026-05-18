@@ -1,0 +1,19 @@
+{
+  "name": "banner-gen",
+  "version": "1.0.0",
+  "description": "AI banner generation tool for internal use",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "upload-assets": "node scripts/upload-assets.js"
+  },
+  "dependencies": {
+    "cloudinary": "^2.5.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.12.0"
+  }
+}

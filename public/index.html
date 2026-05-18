@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banner Gen</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- Left panel: form + preview -->
+    <div class="panel panel-left">
+      <header class="app-header">
+        <h1>Banner Gen</h1>
+        <span class="badge">Internal Tool</span>
+      </header>
+
+      <div class="form-section">
+        <label class="field-label" for="prompt">Image prompt</label>
+        <textarea
+          id="prompt"
+          class="input-field"
+          rows="4"
+          placeholder="Describe the image you want to generate..."
+        ></textarea>
+
+        <label class="field-label" for="bannerText">Banner text</label>
+        <input
+          id="bannerText"
+          type="text"
+          class="input-field"
+          placeholder="e.g. 100% Deposit Bonus + 30 Free Spins"
+        />
+
+        <button id="generateBtn" class="btn btn-primary" onclick="generate()">
+          <span class="btn-icon">✦</span> Generate
+        </button>
+      </div>
+
+      <!-- Preview -->
+      <div id="preview" class="preview hidden">
+        <div class="preview-header">
+          <span class="preview-label">Preview</span>
+          <div class="preview-actions">
+            <button class="btn btn-confirm" onclick="confirm()">✓ Confirm</button>
+            <button class="btn btn-regen" onclick="regenerate()">↻ Regenerate</button>
+          </div>
+        </div>
+        <div class="preview-image-wrap">
+          <img id="previewImg" src="" alt="Generated banner" />
+        </div>
+        <div class="preview-url">
+          <span class="url-label">Cloudinary URL</span>
+          <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
+          <button class="copy-btn" onclick="copyUrl()" title="Copy URL">⎘</button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Generating image… this may take 20–40 seconds</p>
+      </div>
+
+      <!-- Error -->
+      <div id="error" class="error-box hidden"></div>
+    </div>
+
+    <!-- Right panel: history table -->
+    <div class="panel panel-right">
+      <div class="table-header">
+        <h2>Generation history</h2>
+        <button class="refresh-btn" onclick="loadHistory()" title="Refresh">↻</button>
+      </div>
+      <div class="table-wrap">
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Prompt</th>
+              <th>Banner text</th>
+              <th>Status</th>
+              <th>Cloudinary URL</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="6" class="empty">No generations yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
