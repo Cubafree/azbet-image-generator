@@ -15,7 +15,7 @@ const VALID = {
 };
 
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, bannerText, plashkaStyle } = body;
+  const { vertical, country, subject, sportType, accentColor, line2, plashkaStyle } = body;
   if (!VALID.vertical.includes(vertical)) return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country)) return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject)) return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -23,7 +23,7 @@ function validate(body) {
   if (vertical === 'sport' && subject !== 'object' && !VALID.sportType.includes(sportType)) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
   }
-  if (!bannerText?.trim()) return 'bannerText is required';
+  if (!line2?.trim()) return 'line2 is required';
   if (!['filled', 'bordered'].includes(plashkaStyle)) return 'plashkaStyle must be filled or bordered';
   return null;
 }
@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
   const validationError = validate(req.body);
   if (validationError) return res.status(400).json({ error: validationError });
 
-  const { vertical, country, subject, sportType, accentColor, scenePrompt, bannerText, plashkaStyle, line3 } = req.body;
+  const { vertical, country, subject, sportType, accentColor, scenePrompt, line1, line2, plashkaStyle, line3 } = req.body;
 
   try {
     const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt });
@@ -44,8 +44,8 @@ router.post('/', async (req, res) => {
     const finalUrl = buildOverlayUrl(publicId, {
       accentColor,
       plashkaStyle,
-      line1: null,
-      line2: bannerText.trim(),
+      line1: line1?.trim() || null,
+      line2: line2.trim(),
       line3: line3?.trim() || null,
     });
 
@@ -53,19 +53,19 @@ router.post('/', async (req, res) => {
       `INSERT INTO generations
          (prompt, banner_text, cloudinary_public_id, final_url, status,
           vertical, country, subject, sport_type, accent_color, scene_prompt,
-          plashka_style, line3)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+          plashka_style, line1, line2, line3)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
       [
-        userPrompt, bannerText.trim(), publicId, finalUrl,
+        userPrompt, line2.trim(), publicId, finalUrl,
         vertical, country, subject,
         vertical === 'sport' ? (sportType || null) : null,
         accentColor, scenePrompt?.trim() || null,
-        plashkaStyle, line3?.trim() || null,
+        plashkaStyle, line1?.trim() || null, line2.trim(), line3?.trim() || null,
       ]
     );
     const generation = rows[0];
 
-    const tgCaption = `🎨 <b>New banner</b>\n${vertical} · ${country} · ${subject}${sportType ? ` · ${sportType}` : ''}\nBanner: ${bannerText.trim()}`;
+    const tgCaption = `🎨 <b>New banner</b>\n${vertical} · ${country} · ${subject}${sportType ? ` · ${sportType}` : ''}\nBanner: ${line2.trim()}`;
     sendPhotoUrl(finalUrl, tgCaption).catch((err) => console.error('Telegram send failed:', err.message));
 
     res.json({ generation });
@@ -114,8 +114,8 @@ router.post('/:id/regenerate', async (req, res) => {
     const finalUrl = buildOverlayUrl(publicId, {
       accentColor: g.accent_color || 'cyan',
       plashkaStyle: g.plashka_style || 'filled',
-      line1: null,
-      line2: g.banner_text,
+      line1: g.line1 || null,
+      line2: g.line2 || g.banner_text,
       line3: g.line3 || null,
     });
 
@@ -123,9 +123,9 @@ router.post('/:id/regenerate', async (req, res) => {
       `INSERT INTO generations
          (prompt, banner_text, cloudinary_public_id, final_url, status,
           vertical, country, subject, sport_type, accent_color, scene_prompt,
-          plashka_style, line3)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [userPrompt, g.banner_text, publicId, finalUrl, g.vertical, g.country, g.subject, g.sport_type, g.accent_color, g.scene_prompt, g.plashka_style, g.line3]
+          plashka_style, line1, line2, line3)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [userPrompt, g.line2 || g.banner_text, publicId, finalUrl, g.vertical, g.country, g.subject, g.sport_type, g.accent_color, g.scene_prompt, g.plashka_style, g.line1 || null, g.line2 || g.banner_text, g.line3]
     );
     const generation = rows[0];
 

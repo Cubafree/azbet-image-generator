@@ -27,6 +27,8 @@ async function initDb() {
       ADD COLUMN IF NOT EXISTS accent_color TEXT,
       ADD COLUMN IF NOT EXISTS scene_prompt TEXT,
       ADD COLUMN IF NOT EXISTS plashka_style TEXT,
+      ADD COLUMN IF NOT EXISTS line1 TEXT,
+      ADD COLUMN IF NOT EXISTS line2 TEXT,
       ADD COLUMN IF NOT EXISTS line3 TEXT
   `);
   console.log('DB ready');

@@ -8,7 +8,8 @@
 </head>
 <body>
   <div class="layout">
-    <!-- Левая панель: форма + превью -->
+
+    <!-- ── Левая панель: только форма ── -->
     <div class="panel panel-left">
       <header class="app-header">
         <h1>Banner Gen</h1>
@@ -116,25 +117,34 @@
           </label>
         </div>
 
-        <!-- 6. Описание сцены (необязательно) -->
+        <!-- 6. Описание сцены -->
         <label class="field-label" for="scenePrompt">Описание сцены <span class="optional">необязательно</span></label>
         <textarea
           id="scenePrompt"
           class="input-field"
-          rows="3"
+          rows="2"
           placeholder="Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)"
         ></textarea>
 
-        <!-- 7. Текст баннера -->
-        <label class="field-label" for="bannerText">Текст баннера <span class="required">обязательно</span></label>
-        <textarea
-          id="bannerText"
+        <!-- 7. Строка 1 — простой белый текст без подложки -->
+        <label class="field-label" for="line1Input">Строка 1 <span class="optional">без подложки, необязательно</span></label>
+        <input
+          id="line1Input"
+          type="text"
           class="input-field"
-          rows="2"
-          placeholder="Текст для наложения на баннер (арабский или французский)"
-        ></textarea>
+          placeholder="BONUS DE DÉPÔT"
+        />
 
-        <!-- 8. Стиль плашки -->
+        <!-- 8. Строка 2 — текст на плашке -->
+        <label class="field-label" for="line2Input">Строка 2 <span class="required">на плашке, обязательно</span></label>
+        <input
+          id="line2Input"
+          type="text"
+          class="input-field"
+          placeholder="100% + 30 TOURS"
+        />
+
+        <!-- 9. Стиль плашки -->
         <span class="field-label">Стиль плашки</span>
         <div class="radio-group">
           <label class="radio-card">
@@ -147,7 +157,7 @@
           </label>
         </div>
 
-        <!-- 9. Доп. строка (пилл) -->
+        <!-- 10. Доп. строка (пилл) -->
         <label class="toggle-label">
           <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
           <span>Добавить доп. строку (пилл)</span>
@@ -165,47 +175,41 @@
       <!-- Загрузка -->
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
-        <p>Генерация изображения… может занять 20–40 секунд</p>
+        <p>Генерация… 20–40 секунд</p>
       </div>
 
       <!-- Ошибка -->
       <div id="error" class="error-box hidden"></div>
+    </div>
 
-      <!-- Превью -->
-      <div id="preview" class="preview hidden">
-        <div class="preview-header">
-          <span class="preview-label">Превью</span>
-          <div class="preview-actions">
-            <button class="btn btn-confirm" onclick="confirmGen()">✓ Подтвердить</button>
-            <button class="btn btn-regen" onclick="regenerate()">↻ Перегенерировать</button>
+    <!-- ── Правая панель: превью + история ── -->
+    <div class="panel panel-right">
+
+      <!-- Превью (скрыто до генерации) -->
+      <div id="previewSection" class="preview-section hidden">
+        <div class="preview-inner">
+          <div class="preview-img-col">
+            <img id="previewImg" src="" alt="Баннер" />
           </div>
-        </div>
-        <div class="preview-image-wrap">
-          <img id="previewImg" src="" alt="Сгенерированный баннер" />
-        </div>
-        <div class="preview-urls">
-          <div class="preview-url">
-            <span class="url-label">Итоговый URL</span>
-            <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
-            <button class="copy-btn" onclick="copyUrl('previewUrl')" title="Скопировать URL">⎘</button>
+          <div class="preview-controls-col">
+            <p class="preview-section-title">Результат</p>
+            <div class="preview-action-btns">
+              <button class="btn btn-confirm" onclick="confirmGen()">✓ Подтвердить</button>
+              <button class="btn btn-regen" onclick="regenerate()">↻ Перегенерировать</button>
+            </div>
+            <div class="preview-url-block">
+              <span class="url-label">URL</span>
+              <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
+              <button class="copy-btn" onclick="copyUrl('previewUrl')" title="Скопировать">⎘</button>
+            </div>
+            <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank">
+              ↓ Скачать
+            </a>
           </div>
-          <div class="preview-url" id="rawUrlRow" style="display:none">
-            <span class="url-label">Исходное изображение</span>
-            <a id="rawUrl" href="#" target="_blank" class="url-value">—</a>
-            <button class="copy-btn" onclick="copyUrl('rawUrl')" title="Скопировать URL">⎘</button>
-          </div>
-        </div>
-        <div class="preview-download">
-          <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank">
-            ↓ Скачать
-          </a>
         </div>
       </div>
 
-    </div>
-
-    <!-- Правая панель: история -->
-    <div class="panel panel-right">
+      <!-- История -->
       <div class="table-header">
         <h2>История генераций</h2>
         <button class="refresh-btn" onclick="loadHistory()" title="Обновить">↻</button>
@@ -218,7 +222,7 @@
               <th>Вертикаль</th>
               <th>Страна</th>
               <th>Персонаж</th>
-              <th>Текст баннера</th>
+              <th>Строка 2</th>
               <th>Статус</th>
               <th>URL</th>
               <th>Создано</th>
@@ -230,8 +234,8 @@
         </table>
       </div>
     </div>
-  </div>
 
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

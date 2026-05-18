@@ -35,14 +35,15 @@ async function generate() {
   const sportType = getRadioValue('sportType');
   const accentColor = getRadioValue('accentColor');
   const scenePrompt = document.getElementById('scenePrompt').value.trim();
-  const bannerText = document.getElementById('bannerText').value.trim();
+  const line1 = document.getElementById('line1Input').value.trim();
+  const line2 = document.getElementById('line2Input').value.trim();
   const plashkaStyle = getRadioValue('plashkaStyle');
   const line3Raw = document.getElementById('line3Toggle').checked
     ? document.getElementById('line3').value.trim()
     : null;
 
-  if (!bannerText) {
-    showToast('Текст баннера обязателен', 'error');
+  if (!line2) {
+    showToast('Строка 2 (на плашке) обязательна', 'error');
     return;
   }
 
@@ -54,7 +55,13 @@ async function generate() {
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vertical, country, subject, sportType, accentColor, scenePrompt, bannerText, plashkaStyle, ...(line3Raw ? { line3: line3Raw } : {}) }),
+      body: JSON.stringify({
+        vertical, country, subject, sportType, accentColor, scenePrompt,
+        line1: line1 || null,
+        line2,
+        plashkaStyle,
+        ...(line3Raw ? { line3: line3Raw } : {}),
+      }),
     });
 
     const data = await res.json();
@@ -127,7 +134,7 @@ function renderTable(rows) {
       <td>${g.vertical ? capFirst(g.vertical) : '—'}</td>
       <td>${g.country ? capFirst(g.country) : '—'}</td>
       <td>${g.subject ? capFirst(g.subject) : '—'}</td>
-      <td title="${escHtml(g.banner_text)}">${escHtml(truncate(g.banner_text, 30))}</td>
+      <td title="${escHtml(g.line2 || g.banner_text)}">${escHtml(truncate(g.line2 || g.banner_text || '', 30))}</td>
       <td><span class="status-badge status-${g.status}">${g.status}</span></td>
       <td>${g.final_url ? `<a class="table-url" href="${escHtml(g.final_url)}" target="_blank">Open ↗</a>` : '—'}</td>
       <td>${formatDate(g.created_at)}</td>
@@ -138,7 +145,6 @@ function renderTable(rows) {
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function showPreview(generation) {
   const finalUrl = generation.final_url;
-  const rawUrl = `https://res.cloudinary.com/${generation.cloudinary_public_id || ''}`;
 
   document.getElementById('previewImg').src = finalUrl;
   const urlEl = document.getElementById('previewUrl');
@@ -147,11 +153,11 @@ function showPreview(generation) {
 
   document.getElementById('downloadBtn').href = finalUrl;
 
-  document.getElementById('preview').classList.remove('hidden');
+  document.getElementById('previewSection').classList.remove('hidden');
 }
 
 function hidePreview() {
-  document.getElementById('preview').classList.add('hidden');
+  document.getElementById('previewSection').classList.add('hidden');
 }
 
 function setLoading(on) {
