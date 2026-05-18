@@ -10,7 +10,7 @@ async function generateImage(userPrompt) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2',
       prompt: fullPrompt,
       size: '1024x1536',
       quality: 'medium',
