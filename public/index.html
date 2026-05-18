@@ -16,44 +16,122 @@
       </header>
 
       <div class="form-section">
-        <label class="field-label" for="prompt">Image prompt</label>
+
+        <!-- 1. Vertical -->
+        <span class="field-label">Vertical</span>
+        <div class="radio-group" id="verticalGroup">
+          <label class="radio-card">
+            <input type="radio" name="vertical" value="casino" checked />
+            <span>🎰 Casino</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="vertical" value="sport" />
+            <span>⚽ Sport</span>
+          </label>
+        </div>
+
+        <!-- 2. Country -->
+        <span class="field-label">Country</span>
+        <div class="radio-group" id="countryGroup">
+          <label class="radio-card">
+            <input type="radio" name="country" value="egypt" checked />
+            <span>Egypt <em>(مصر)</em></span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="country" value="morocco" />
+            <span>Morocco <em>(المغرب)</em></span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="country" value="algeria" />
+            <span>Algeria <em>(الجزائر)</em></span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="country" value="libya" />
+            <span>Libya <em>(ليبيا)</em></span>
+          </label>
+        </div>
+
+        <!-- 3. Subject -->
+        <span class="field-label">Subject</span>
+        <div class="radio-group" id="subjectGroup">
+          <label class="radio-card">
+            <input type="radio" name="subject" value="woman" checked />
+            <span>👩 Woman</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="subject" value="man" />
+            <span>👨 Man</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="subject" value="object" />
+            <span>🎯 Object</span>
+          </label>
+        </div>
+
+        <!-- 4. Sport Type (conditional) -->
+        <div id="sportTypeRow">
+          <span class="field-label">Sport type</span>
+          <div class="radio-group" id="sportTypeGroup">
+            <label class="radio-card">
+              <input type="radio" name="sportType" value="football" checked />
+              <span>⚽ Football</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="sportType" value="tennis" />
+              <span>🎾 Tennis</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="sportType" value="basketball" />
+              <span>🏀 Basketball</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="sportType" value="general" />
+              <span>🏆 General</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 5. Accent Color -->
+        <span class="field-label">Accent color</span>
+        <div class="color-group" id="colorGroup">
+          <label class="color-card" title="Cyan / Electric Blue">
+            <input type="radio" name="accentColor" value="cyan" checked />
+            <span class="color-swatch" style="background:#00d4ff"></span>
+            <span class="color-name">Cyan</span>
+          </label>
+          <label class="color-card" title="Emerald Green">
+            <input type="radio" name="accentColor" value="green" />
+            <span class="color-swatch" style="background:#00e676"></span>
+            <span class="color-name">Green</span>
+          </label>
+          <label class="color-card" title="Violet Purple">
+            <input type="radio" name="accentColor" value="purple" />
+            <span class="color-swatch" style="background:#8b5cf6"></span>
+            <span class="color-name">Purple</span>
+          </label>
+        </div>
+
+        <!-- 6. Scene Prompt (optional) -->
+        <label class="field-label" for="scenePrompt">Scene prompt <span class="optional">optional</span></label>
         <textarea
-          id="prompt"
+          id="scenePrompt"
           class="input-field"
-          rows="4"
-          placeholder="Describe the image you want to generate..."
+          rows="3"
+          placeholder="Optional: describe what you want to see (e.g. woman in kaftan holding slot reel, warm Moroccan riad)"
         ></textarea>
 
-        <label class="field-label" for="bannerText">Banner text</label>
-        <input
+        <!-- 7. Banner Text -->
+        <label class="field-label" for="bannerText">Banner text <span class="required">required</span></label>
+        <textarea
           id="bannerText"
-          type="text"
           class="input-field"
-          placeholder="e.g. 100% Deposit Bonus + 30 Free Spins"
-        />
+          rows="2"
+          placeholder="Text for banner overlay (Arabic or French)"
+        ></textarea>
 
         <button id="generateBtn" class="btn btn-primary" onclick="generate()">
           <span class="btn-icon">✦</span> Generate
         </button>
-      </div>
-
-      <!-- Preview -->
-      <div id="preview" class="preview hidden">
-        <div class="preview-header">
-          <span class="preview-label">Preview</span>
-          <div class="preview-actions">
-            <button class="btn btn-confirm" onclick="confirm()">✓ Confirm</button>
-            <button class="btn btn-regen" onclick="regenerate()">↻ Regenerate</button>
-          </div>
-        </div>
-        <div class="preview-image-wrap">
-          <img id="previewImg" src="" alt="Generated banner" />
-        </div>
-        <div class="preview-url">
-          <span class="url-label">Cloudinary URL</span>
-          <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
-          <button class="copy-btn" onclick="copyUrl()" title="Copy URL">⎘</button>
-        </div>
       </div>
 
       <!-- Loading state -->
@@ -64,6 +142,38 @@
 
       <!-- Error -->
       <div id="error" class="error-box hidden"></div>
+
+      <!-- Preview -->
+      <div id="preview" class="preview hidden">
+        <div class="preview-header">
+          <span class="preview-label">Preview</span>
+          <div class="preview-actions">
+            <button class="btn btn-confirm" onclick="confirmGen()">✓ Confirm</button>
+            <button class="btn btn-regen" onclick="regenerate()">↻ Regenerate</button>
+          </div>
+        </div>
+        <div class="preview-image-wrap">
+          <img id="previewImg" src="" alt="Generated banner" />
+        </div>
+        <div class="preview-urls">
+          <div class="preview-url">
+            <span class="url-label">Final URL</span>
+            <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
+            <button class="copy-btn" onclick="copyUrl('previewUrl')" title="Copy URL">⎘</button>
+          </div>
+          <div class="preview-url" id="rawUrlRow" style="display:none">
+            <span class="url-label">Raw image</span>
+            <a id="rawUrl" href="#" target="_blank" class="url-value">—</a>
+            <button class="copy-btn" onclick="copyUrl('rawUrl')" title="Copy URL">⎘</button>
+          </div>
+        </div>
+        <div class="preview-download">
+          <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank">
+            ↓ Download
+          </a>
+        </div>
+      </div>
+
     </div>
 
     <!-- Right panel: history table -->
@@ -77,15 +187,17 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Prompt</th>
+              <th>Vertical</th>
+              <th>Country</th>
+              <th>Subject</th>
               <th>Banner text</th>
               <th>Status</th>
-              <th>Cloudinary URL</th>
+              <th>URL</th>
               <th>Created</th>
             </tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="6" class="empty">No generations yet</td></tr>
+            <tr><td colspan="8" class="empty">No generations yet</td></tr>
           </tbody>
         </table>
       </div>

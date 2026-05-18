@@ -1,7 +1,5 @@
-const { SYSTEM_PROMPT } = require('../config');
-
-async function generateImage(userPrompt) {
-  const fullPrompt = `${SYSTEM_PROMPT}\n\nUser request: ${userPrompt}`;
+async function generateImage({ systemPrompt, userPrompt }) {
+  const fullPrompt = `${systemPrompt}\n\nUser request: ${userPrompt}`;
 
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',

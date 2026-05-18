@@ -201,6 +201,96 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 }
 .copy-btn:hover { color: var(--accent); }
 
+/* Radio cards */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.radio-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.radio-card input[type="radio"] { display: none; }
+.radio-card:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(6,182,212,.1);
+  color: var(--accent);
+}
+.radio-card:hover:not(:has(input:checked)) { border-color: #2d4060; }
+.radio-card em { font-style: normal; opacity: .6; font-size: 11px; }
+
+/* Color swatches */
+.color-group {
+  display: flex;
+  gap: 10px;
+}
+
+.color-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .15s;
+  user-select: none;
+}
+.color-card input[type="radio"] { display: none; }
+.color-card:has(input:checked) { border-color: var(--accent); }
+
+.color-swatch {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+.color-card:has(input[value="cyan"]:checked) .color-swatch { box-shadow: 0 0 12px #00d4ff; }
+.color-card:has(input[value="green"]:checked) .color-swatch { box-shadow: 0 0 12px #00e676; }
+.color-card:has(input[value="purple"]:checked) .color-swatch { box-shadow: 0 0 12px #8b5cf6; }
+
+.color-name { font-size: 12px; color: var(--text-muted); }
+
+/* Field label modifiers */
+.optional { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 4px; text-transform: none; letter-spacing: 0; }
+.required { font-size: 10px; color: var(--accent2); font-weight: 400; margin-left: 4px; text-transform: none; letter-spacing: 0; }
+
+/* Preview URL section */
+.preview-urls { display: flex; flex-direction: column; }
+.preview-download {
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+}
+.btn-download {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 16px;
+  font-size: 13px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius);
+  transition: border-color .15s;
+}
+.btn-download:hover { border-color: var(--accent); color: var(--accent); }
+
 /* Loading */
 .loading {
   display: flex;
