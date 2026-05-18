@@ -113,24 +113,24 @@ function buildOverlayUrl(imagePublicId, params) {
     }
 
     t.push(step);
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 300 });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: 290 });
   }
 
-  // ── LAYER 4 — Line 3: pill, auto-width, centered (Cairo Bold) ───────────────
+  // ── LAYER 4 — Line 3: pill, auto-width (Cairo Bold) ─────────────────────────
   if (line3?.trim()) {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 46,
+        font_size: 44,
         font_weight: 'bold',
         text: line3.trim(),
       },
       color: `rgb:${hex}`,
       background: 'rgb:111111',
-      border: `8px_solid_rgb:${hex}`,
-      radius: 50,
+      border: `5px_solid_rgb:${hex}`,
+      radius: 30,
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 420 });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: 375 });
   }
 
   return cloudinary.url(imagePublicId, {
