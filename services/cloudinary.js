@@ -89,51 +89,48 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', y: 185 });
   }
 
-  // ── LAYER 3 — Line 2: plashka, no tilt, auto-width (Oswald ExtraBold / Cairo ExtraBold) ──
+  // ── LAYER 3 — Line 2: plashka, compact height, auto-width ───────────────────
   if (line2?.trim()) {
     const step = {
       overlay: {
         font_family: pickFont(line2),
-        font_size: 68,
+        font_size: 58,
         font_weight: 'extrabold',
         letter_spacing: 2,
         text: line2.trim(),
       },
-      radius: 16,
+      radius: 12,
     };
 
     if (plashkaStyle === 'bordered') {
       step.color = 'rgb:ffffff';
       step.background = 'rgb:0d0d0d';
-      step.border = `5px_solid_rgb:${hex}`;
+      step.border = `4px_solid_rgb:${hex}`;
     } else {
       step.color = `rgb:${textHex}`;
       step.background = `rgb:${hex}`;
-      step.border = `12px_solid_rgb:${hex}`;
+      step.border = `8px_solid_rgb:${hex}`;
     }
 
     t.push(step);
     t.push({ flags: 'layer_apply', gravity: 'north', y: 300 });
   }
 
-  // ── LAYER 4 — Line 3: pill, fixed width for padding, centered (Cairo Bold) ───
+  // ── LAYER 4 — Line 3: pill, auto-width, centered (Cairo Bold) ───────────────
   if (line3?.trim()) {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 48,
+        font_size: 46,
         font_weight: 'bold',
-        text_align: 'center',
         text: line3.trim(),
       },
       color: `rgb:${hex}`,
       background: 'rgb:111111',
-      border: `3px_solid_rgb:${hex}`,
+      border: `8px_solid_rgb:${hex}`,
       radius: 50,
-      width: 520,
-      crop: 'fit',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 430 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 420 });
   }
 
   return cloudinary.url(imagePublicId, {
