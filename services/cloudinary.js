@@ -123,6 +123,7 @@ function buildOverlayUrl(imagePublicId, params) {
         font_family: 'Cairo',
         font_size: 48,
         font_weight: 'bold',
+        text_align: 'center',
         text: line3.trim(),
       },
       color: `rgb:${hex}`,
