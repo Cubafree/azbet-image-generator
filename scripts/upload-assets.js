@@ -22,6 +22,7 @@ const fs = require('fs');
 
 const ASSETS = [
   { file: 'assets/logo.png',          publicId: 'banner-gen/logo',          envVar: 'CLOUDINARY_LOGO_PUBLIC_ID' },
+  { file: 'assets/badges.svg',        publicId: 'banner-gen/badges',        envVar: 'CLOUDINARY_BADGES_PUBLIC_ID' },
   { file: 'assets/frame-cyan.svg',    publicId: 'banner-gen/frame-cyan',    envVar: 'CLOUDINARY_FRAME_CYAN_PUBLIC_ID' },
   { file: 'assets/frame-green.svg',   publicId: 'banner-gen/frame-green',   envVar: 'CLOUDINARY_FRAME_GREEN_PUBLIC_ID' },
   { file: 'assets/frame-purple.svg',  publicId: 'banner-gen/frame-purple',  envVar: 'CLOUDINARY_FRAME_PURPLE_PUBLIC_ID' },

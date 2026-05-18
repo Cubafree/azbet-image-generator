@@ -35,11 +35,15 @@ async function uploadAsset(filePath, publicId) {
   });
 }
 
-// Arabic Unicode block detection → Cairo; Latin/digits → Oswald
+// Arabic Unicode range → Cairo; Latin/digits → Oswald
 function pickFont(text) {
   return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text)
     ? 'Cairo'
     : 'Oswald';
+}
+
+function cldId(publicId) {
+  return publicId.replace(/\//g, ':');
 }
 
 function buildOverlayUrl(imagePublicId, params) {
@@ -52,15 +56,27 @@ function buildOverlayUrl(imagePublicId, params) {
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
-  const { logoPublicId } = CLOUDINARY_CONFIG;
+  const { logoPublicId, badgesPublicId, framePublicIds } = CLOUDINARY_CONFIG;
 
-  const t = []; // transformation steps
+  const t = [];
 
-  // ── LAYER 0 — Bottom frame image (per accent color) ─────────────────────────
-  const framePublicId = CLOUDINARY_CONFIG.framePublicIds?.[accentColor];
+  // ── LAYER 0 — Badges SVG (Google Play + App Store combined, shared) ──────────
+  // Sits at very bottom; applied first so frame can overlay on top of it if needed
+  if (badgesPublicId) {
+    t.push({
+      overlay: cldId(badgesPublicId),
+      gravity: 'south',
+      width: 1060,   // nearly full 1080px width
+      y: 0,
+    });
+    t.push({ flags: 'layer_apply' });
+  }
+
+  // ── LAYER 1 — Per-color frame SVG (decorative bottom shape) ─────────────────
+  const framePublicId = framePublicIds?.[accentColor];
   if (framePublicId) {
     t.push({
-      overlay: framePublicId.replace(/\//g, ':'),
+      overlay: cldId(framePublicId),
       gravity: 'south',
       width: 1.0,
       flags: 'relative',
@@ -68,31 +84,42 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply' });
   }
 
-  // ── LAYER 1 — Line 1: Oswald Bold 700 / Cairo Bold (auto-detected) ──────────
+  // ── LAYER 2 — Logo (top center) ──────────────────────────────────────────────
+  if (logoPublicId) {
+    t.push({
+      overlay: cldId(logoPublicId),
+      gravity: 'north',
+      width: 260,
+      y: 55,
+    });
+    t.push({ flags: 'layer_apply' });
+  }
+
+  // ── LAYER 3 — Line 1: plain white text (Oswald Bold 700 / Cairo Bold) ────────
   if (line1?.trim()) {
     t.push({
       overlay: {
         font_family: pickFont(line1),
-        font_size: 60,
-        font_weight: 'bold',      // 700
+        font_size: 64,
+        font_weight: 'bold',
         text: line1.trim(),
       },
       color: 'rgb:ffffff',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 120 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 150 });
   }
 
-  // ── LAYER 2 — Line 2: Oswald ExtraBold / Cairo ExtraBold on plashka ─────────
+  // ── LAYER 4 — Line 2: plashka, −5° tilt (Oswald ExtraBold / Cairo ExtraBold) ─
   if (line2?.trim()) {
     const step = {
       overlay: {
         font_family: pickFont(line2),
-        font_size: 72,
-        font_weight: 'extrabold',  // 800
+        font_size: 84,
+        font_weight: 'extrabold',
         text: line2.trim(),
       },
-      radius: 30,
-      angle: -4,
+      radius: 28,
+      angle: -5,   // slight counterclockwise tilt, matching example
     };
 
     if (plashkaStyle === 'bordered') {
@@ -102,40 +129,28 @@ function buildOverlayUrl(imagePublicId, params) {
     } else {
       step.color = `rgb:${textHex}`;
       step.background = `rgb:${hex}`;
-      step.border = `22px_solid_rgb:${hex}`;
+      step.border = `20px_solid_rgb:${hex}`;
     }
 
     t.push(step);
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 210 });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 245 });
   }
 
-  // ── LAYER 3 — Line 3 pill: Cairo Bold (handles Arabic + Latin numbers) ───────
+  // ── LAYER 5 — Line 3: pill (Cairo Bold — works for Arabic + Latin numbers) ───
   if (line3?.trim()) {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 48,
-        font_weight: 'bold',       // 700
+        font_size: 54,
+        font_weight: 'bold',
         text: line3.trim(),
       },
       color: `rgb:${hex}`,
       background: 'rgb:111111',
       border: `3px_solid_rgb:${hex}`,
-      radius: 25,
+      radius: 24,
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 320 });
-  }
-
-  // ── LAYER 4 — Logo ──────────────────────────────────────────────────────────
-  if (logoPublicId) {
-    t.push({
-      overlay: logoPublicId.replace(/\//g, ':'),
-      gravity: 'north',
-      width: 320,
-      y: 40,
-      flags: 'relative',
-    });
-    t.push({ flags: 'layer_apply' });
+    t.push({ flags: 'layer_apply', gravity: 'north', y: 370 });
   }
 
   return cloudinary.url(imagePublicId, {
