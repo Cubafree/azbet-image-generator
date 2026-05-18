@@ -15,7 +15,7 @@ const VALID = {
 };
 
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, bannerText } = body;
+  const { vertical, country, subject, sportType, accentColor, bannerText, plashkaStyle } = body;
   if (!VALID.vertical.includes(vertical)) return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country)) return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject)) return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -24,6 +24,7 @@ function validate(body) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
   }
   if (!bannerText?.trim()) return 'bannerText is required';
+  if (!['filled', 'bordered'].includes(plashkaStyle)) return 'plashkaStyle must be filled or bordered';
   return null;
 }
 
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
   const validationError = validate(req.body);
   if (validationError) return res.status(400).json({ error: validationError });
 
-  const { vertical, country, subject, sportType, accentColor, scenePrompt, bannerText } = req.body;
+  const { vertical, country, subject, sportType, accentColor, scenePrompt, bannerText, plashkaStyle, line3 } = req.body;
 
   try {
     const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt });
@@ -40,18 +41,26 @@ router.post('/', async (req, res) => {
 
     const uploadResult = await uploadImage(imageBuffer);
     const publicId = uploadResult.public_id;
-    const finalUrl = buildOverlayUrl(publicId, bannerText.trim());
+    const finalUrl = buildOverlayUrl(publicId, {
+      accentColor,
+      plashkaStyle,
+      line1: null,
+      line2: bannerText.trim(),
+      line3: line3?.trim() || null,
+    });
 
     const { rows } = await pool.query(
       `INSERT INTO generations
          (prompt, banner_text, cloudinary_public_id, final_url, status,
-          vertical, country, subject, sport_type, accent_color, scene_prompt)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10) RETURNING *`,
+          vertical, country, subject, sport_type, accent_color, scene_prompt,
+          plashka_style, line3)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
         userPrompt, bannerText.trim(), publicId, finalUrl,
         vertical, country, subject,
         vertical === 'sport' ? (sportType || null) : null,
         accentColor, scenePrompt?.trim() || null,
+        plashkaStyle, line3?.trim() || null,
       ]
     );
     const generation = rows[0];
@@ -102,14 +111,21 @@ router.post('/:id/regenerate', async (req, res) => {
     const imageBuffer = await generateImage({ systemPrompt, userPrompt });
     const uploadResult = await uploadImage(imageBuffer);
     const publicId = uploadResult.public_id;
-    const finalUrl = buildOverlayUrl(publicId, g.banner_text);
+    const finalUrl = buildOverlayUrl(publicId, {
+      accentColor: g.accent_color || 'cyan',
+      plashkaStyle: g.plashka_style || 'filled',
+      line1: null,
+      line2: g.banner_text,
+      line3: g.line3 || null,
+    });
 
     const { rows } = await pool.query(
       `INSERT INTO generations
          (prompt, banner_text, cloudinary_public_id, final_url, status,
-          vertical, country, subject, sport_type, accent_color, scene_prompt)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [userPrompt, g.banner_text, publicId, finalUrl, g.vertical, g.country, g.subject, g.sport_type, g.accent_color, g.scene_prompt]
+          vertical, country, subject, sport_type, accent_color, scene_prompt,
+          plashka_style, line3)
+       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [userPrompt, g.banner_text, publicId, finalUrl, g.vertical, g.country, g.subject, g.sport_type, g.accent_color, g.scene_prompt, g.plashka_style, g.line3]
     );
     const generation = rows[0];
 

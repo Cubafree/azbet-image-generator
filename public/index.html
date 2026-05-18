@@ -129,6 +129,29 @@
           placeholder="Text for banner overlay (Arabic or French)"
         ></textarea>
 
+        <!-- 8. Plashka Style -->
+        <span class="field-label">Стиль плашки</span>
+        <div class="radio-group">
+          <label class="radio-card">
+            <input type="radio" name="plashkaStyle" value="filled" checked />
+            <span>Залитая</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="plashkaStyle" value="bordered" />
+            <span>Bordered</span>
+          </label>
+        </div>
+
+        <!-- 9. Line 3 pill (optional) -->
+        <label class="toggle-label">
+          <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
+          <span>Добавить доп. строку (пилл)</span>
+        </label>
+        <div id="line3Row" class="hidden">
+          <label class="field-label" for="line3">Доп. строка</label>
+          <input id="line3" type="text" class="input-field" placeholder="78K + 150FS" />
+        </div>
+
         <button id="generateBtn" class="btn btn-primary" onclick="generate()">
           <span class="btn-icon">✦</span> Generate
         </button>

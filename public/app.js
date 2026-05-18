@@ -20,6 +20,13 @@ function getRadioValue(name) {
   return el ? el.value : null;
 }
 
+// ── Line3 toggle ──────────────────────────────────────────────────────────────
+function toggleLine3() {
+  const show = document.getElementById('line3Toggle').checked;
+  document.getElementById('line3Row').classList.toggle('hidden', !show);
+  if (!show) document.getElementById('line3').value = '';
+}
+
 // ── Generate ──────────────────────────────────────────────────────────────────
 async function generate() {
   const vertical = getRadioValue('vertical');
@@ -29,6 +36,10 @@ async function generate() {
   const accentColor = getRadioValue('accentColor');
   const scenePrompt = document.getElementById('scenePrompt').value.trim();
   const bannerText = document.getElementById('bannerText').value.trim();
+  const plashkaStyle = getRadioValue('plashkaStyle');
+  const line3Raw = document.getElementById('line3Toggle').checked
+    ? document.getElementById('line3').value.trim()
+    : null;
 
   if (!bannerText) {
     showToast('Banner text is required', 'error');
@@ -43,7 +54,7 @@ async function generate() {
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vertical, country, subject, sportType, accentColor, scenePrompt, bannerText }),
+      body: JSON.stringify({ vertical, country, subject, sportType, accentColor, scenePrompt, bannerText, plashkaStyle, ...(line3Raw ? { line3: line3Raw } : {}) }),
     });
 
     const data = await res.json();
