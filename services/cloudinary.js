@@ -35,6 +35,13 @@ async function uploadAsset(filePath, publicId) {
   });
 }
 
+// Arabic Unicode block detection → Cairo; Latin/digits → Oswald
+function pickFont(text) {
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text)
+    ? 'Cairo'
+    : 'Oswald';
+}
+
 function buildOverlayUrl(imagePublicId, params) {
   const {
     accentColor = 'cyan',
@@ -45,7 +52,6 @@ function buildOverlayUrl(imagePublicId, params) {
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
-  const font = CLOUDINARY_CONFIG.textFont || 'Arial';
   const { logoPublicId } = CLOUDINARY_CONFIG;
 
   const t = []; // transformation steps
@@ -62,19 +68,29 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply' });
   }
 
-  // ── LAYER 1 — Line 1: plain white text, no background ──────────────────────
+  // ── LAYER 1 — Line 1: Oswald Bold 700 / Cairo Bold (auto-detected) ──────────
   if (line1?.trim()) {
     t.push({
-      overlay: { font_family: font, font_size: 60, font_weight: 'bold', text: line1.trim() },
+      overlay: {
+        font_family: pickFont(line1),
+        font_size: 60,
+        font_weight: 'bold',      // 700
+        text: line1.trim(),
+      },
       color: 'rgb:ffffff',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', y: 120 });
   }
 
-  // ── LAYER 2 — Line 2: plashka (filled or bordered) ─────────────────────────
+  // ── LAYER 2 — Line 2: Oswald ExtraBold / Cairo ExtraBold on plashka ─────────
   if (line2?.trim()) {
     const step = {
-      overlay: { font_family: font, font_size: 72, font_weight: 'bold', text: line2.trim() },
+      overlay: {
+        font_family: pickFont(line2),
+        font_size: 72,
+        font_weight: 'extrabold',  // 800
+        text: line2.trim(),
+      },
       radius: 30,
       angle: -4,
     };
@@ -84,7 +100,6 @@ function buildOverlayUrl(imagePublicId, params) {
       step.background = 'rgb:0d0d0d';
       step.border = `5px_solid_rgb:${hex}`;
     } else {
-      // filled (default)
       step.color = `rgb:${textHex}`;
       step.background = `rgb:${hex}`;
       step.border = `22px_solid_rgb:${hex}`;
@@ -94,10 +109,15 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', y: 210 });
   }
 
-  // ── LAYER 3 — Line 3: pill (optional) ──────────────────────────────────────
+  // ── LAYER 3 — Line 3 pill: Cairo Bold (handles Arabic + Latin numbers) ───────
   if (line3?.trim()) {
     t.push({
-      overlay: { font_family: font, font_size: 48, font_weight: 'bold', text: line3.trim() },
+      overlay: {
+        font_family: 'Cairo',
+        font_size: 48,
+        font_weight: 'bold',       // 700
+        text: line3.trim(),
+      },
       color: `rgb:${hex}`,
       background: 'rgb:111111',
       border: `3px_solid_rgb:${hex}`,
