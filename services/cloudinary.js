@@ -89,18 +89,17 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', y: 185 });
   }
 
-  // ── LAYER 3 — Line 2: plashka, −5° tilt (Oswald ExtraBold / Cairo ExtraBold) ─
+  // ── LAYER 3 — Line 2: plashka, −5° tilt, auto-width (Oswald ExtraBold / Cairo ExtraBold) ─
   if (line2?.trim()) {
     const step = {
       overlay: {
         font_family: pickFont(line2),
         font_size: 68,
         font_weight: 'extrabold',
+        letter_spacing: 2,
         text: line2.trim(),
       },
-      width: 920,
-      crop: 'fit',
-      radius: 28,
+      radius: 20,
       angle: -5,
     };
 
@@ -111,28 +110,27 @@ function buildOverlayUrl(imagePublicId, params) {
     } else {
       step.color = `rgb:${textHex}`;
       step.background = `rgb:${hex}`;
-      step.border = `20px_solid_rgb:${hex}`;
+      step.border = `10px_solid_rgb:${hex}`;
     }
 
     t.push(step);
     t.push({ flags: 'layer_apply', gravity: 'north', y: 300 });
   }
 
-  // ── LAYER 4 — Line 3: pill (Cairo Bold) ──────────────────────────────────────
+  // ── LAYER 4 — Line 3: pill, auto-width, centered (Cairo Bold) ────────────────
   if (line3?.trim()) {
     t.push({
       overlay: {
         font_family: 'Cairo',
         font_size: 48,
         font_weight: 'bold',
+        text_align: 'center',
         text: line3.trim(),
       },
       color: `rgb:${hex}`,
       background: 'rgb:111111',
       border: `3px_solid_rgb:${hex}`,
       radius: 24,
-      width: 800,
-      crop: 'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', y: 440 });
   }
