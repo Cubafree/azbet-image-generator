@@ -31,7 +31,7 @@ const R  = 14;    // plashka corner radius
 const PW = 460;   // pill width
 const PH = 68;    // pill height
 const PR = 34;    // pill corner radius
-const GAP = 12;   // gap between plashka bottom and pill top
+const GAP = 6;    // gap between plashka bottom and pill top
 
 // --- SVG builders ---
 

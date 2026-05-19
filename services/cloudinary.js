@@ -25,8 +25,8 @@ const Y = {
   plashka:    275,  // SVG plashka top from north (346.8 × 0.8 ≈ 277, rounded)
   // line2 text centred on 100px plashka: 275 + 50 - 30 = 295
   line2Text:  295,
-  // line3 text centred on pill (100 + 12 gap + 34 pill_half): 275 + 146 - 24 = 397
-  line3Text:  397,
+  // line3 text centred on pill (100 + 6 gap + 34 pill_half): 275 + 140 - 22 = 393
+  line3Text:  393,
 };
 
 // SVG plashka width (matches generate-plashka-svgs.js)
