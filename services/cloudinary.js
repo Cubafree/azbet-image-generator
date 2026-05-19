@@ -30,7 +30,7 @@ const Y = {
 };
 
 // SVG plashka width (matches generate-plashka-svgs.js)
-const PLASHKA_SVG_W = 750;
+const PLASHKA_SVG_W = 680;
 
 // Arabic Unicode → Cairo; Latin/digits → Oswald
 function pickFont(text) {

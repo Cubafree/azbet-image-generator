@@ -25,7 +25,7 @@ const COLORS = {
 const DARK = '#111118';
 
 // Dimensions (optimised for 1024px wide image canvas)
-const W  = 750;   // plashka width
+const W  = 680;   // plashka width
 const H  = 100;   // plashka height
 const R  = 14;    // plashka corner radius
 const PW = 460;   // pill width
