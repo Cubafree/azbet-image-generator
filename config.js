@@ -89,18 +89,34 @@ DO NOT render any text, numbers, words, or logos anywhere in the image.`,
 };
 
 const CLOUDINARY_CONFIG = {
-  logoPublicId:   process.env.CLOUDINARY_LOGO_PUBLIC_ID   || 'banner-gen/logo',
+  logoPublicId: process.env.CLOUDINARY_LOGO_PUBLIC_ID || 'banner-gen/logo',
   framePublicIds: {
     cyan:   process.env.CLOUDINARY_FRAME_CYAN_PUBLIC_ID   || 'banner-gen/frame-cyan',
     green:  process.env.CLOUDINARY_FRAME_GREEN_PUBLIC_ID  || 'banner-gen/frame-green',
     purple: process.env.CLOUDINARY_FRAME_PURPLE_PUBLIC_ID || 'banner-gen/frame-purple',
     gold:   process.env.CLOUDINARY_FRAME_GOLD_PUBLIC_ID   || 'banner-gen/frame-gold',
   },
-  textFont: process.env.CLOUDINARY_TEXT_FONT || 'Arial',
-  textSize: process.env.CLOUDINARY_TEXT_SIZE || '52',
-  textColor: process.env.CLOUDINARY_TEXT_COLOR || 'ffffff',
-  textGravity: process.env.CLOUDINARY_TEXT_GRAVITY || 'south',
-  textY: process.env.CLOUDINARY_TEXT_Y || '120',
+  // a = filled+pill  b = filled only  c = bordered
+  plashkaPublicIds: {
+    a: {
+      cyan:   process.env.CLOUDINARY_PLASHKA_A_CYAN_PUBLIC_ID   || 'banner-gen/plashka-a-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_A_GREEN_PUBLIC_ID  || 'banner-gen/plashka-a-green',
+      purple: process.env.CLOUDINARY_PLASHKA_A_PURPLE_PUBLIC_ID || 'banner-gen/plashka-a-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_A_GOLD_PUBLIC_ID   || 'banner-gen/plashka-a-gold',
+    },
+    b: {
+      cyan:   process.env.CLOUDINARY_PLASHKA_B_CYAN_PUBLIC_ID   || 'banner-gen/plashka-b-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_B_GREEN_PUBLIC_ID  || 'banner-gen/plashka-b-green',
+      purple: process.env.CLOUDINARY_PLASHKA_B_PURPLE_PUBLIC_ID || 'banner-gen/plashka-b-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_B_GOLD_PUBLIC_ID   || 'banner-gen/plashka-b-gold',
+    },
+    c: {
+      cyan:   process.env.CLOUDINARY_PLASHKA_C_CYAN_PUBLIC_ID   || 'banner-gen/plashka-c-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_C_GREEN_PUBLIC_ID  || 'banner-gen/plashka-c-green',
+      purple: process.env.CLOUDINARY_PLASHKA_C_PURPLE_PUBLIC_ID || 'banner-gen/plashka-c-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_C_GOLD_PUBLIC_ID   || 'banner-gen/plashka-c-gold',
+    },
+  },
 };
 
 module.exports = { PROMPT_BLOCKS, CLOUDINARY_CONFIG };

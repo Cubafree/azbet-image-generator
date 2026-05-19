@@ -3,7 +3,7 @@ const { CLOUDINARY_CONFIG } = require('../config');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -13,6 +13,41 @@ const ACCENT_MAP = {
   purple: { hex: '8b5cf6', textHex: 'ffffff' },
   gold:   { hex: 'ffd700', textHex: '000000' },
 };
+
+// Image sizes (px) — must match OpenAI output
+const IMG_W = 1024;
+const IMG_H = 1536;
+
+// Overlay coordinates (derived from Figma AL-17 frame 1080×1920, scaled 0.948× / 0.8×)
+const Y = {
+  logo:       55,   // logo top from north
+  line1:      220,  // line1 text top from north
+  plashka:    275,  // SVG plashka top from north (346.8 × 0.8 ≈ 277, rounded)
+  // line2 text centred on 100px plashka: 275 + 50 - 30 = 295
+  line2Text:  295,
+  // line3 text centred on pill (100 + 12 gap + 34 pill_half): 275 + 146 - 24 = 397
+  line3Text:  397,
+};
+
+// SVG plashka width (matches generate-plashka-svgs.js)
+const PLASHKA_SVG_W = 750;
+
+// Arabic Unicode → Cairo; Latin/digits → Oswald
+function pickFont(text) {
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text) ? 'Cairo' : 'Oswald';
+}
+
+function cldId(publicId) {
+  return publicId.replace(/\//g, ':');
+}
+
+// plashkaStyle: 'filled' | 'bordered'
+// hasLine3: bool
+// → 'a' (filled+pill) | 'b' (filled) | 'c' (bordered)
+function plashkaType(plashkaStyle, hasLine3) {
+  if (plashkaStyle === 'bordered') return 'c';
+  return hasLine3 ? 'a' : 'b';
+}
 
 async function uploadImage(buffer, folder = 'banner-gen/generated') {
   return new Promise((resolve, reject) => {
@@ -29,114 +64,102 @@ async function uploadImage(buffer, folder = 'banner-gen/generated') {
 
 async function uploadAsset(filePath, publicId) {
   return cloudinary.uploader.upload(filePath, {
-    public_id: publicId,
+    public_id:     publicId,
     resource_type: 'image',
-    overwrite: true,
+    overwrite:     true,
   });
-}
-
-// Arabic Unicode range → Cairo; Latin/digits → Oswald
-function pickFont(text) {
-  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text)
-    ? 'Cairo'
-    : 'Oswald';
-}
-
-function cldId(publicId) {
-  return publicId.replace(/\//g, ':');
 }
 
 function buildOverlayUrl(imagePublicId, params) {
   const {
-    accentColor = 'cyan',
+    accentColor  = 'cyan',
     plashkaStyle = 'filled',
-    line1 = null,
-    line2 = null,
-    line3 = null,
+    line1        = null,
+    line2        = null,
+    line3        = null,
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
-  const { logoPublicId, framePublicIds } = CLOUDINARY_CONFIG;
+  const { logoPublicId, framePublicIds, plashkaPublicIds } = CLOUDINARY_CONFIG;
 
   const t = [];
 
-  // ── LAYER 0 — Per-color badges panel (gravity south, 60% width, lifted) ──────
-  const framePublicId = framePublicIds?.[accentColor];
-  if (framePublicId) {
-    t.push({ overlay: cldId(framePublicId), width: 614 });
+  // ── LAYER 0 — App-store badge panel (south, 60% width, lifted) ───────────
+  const frameId = framePublicIds?.[accentColor];
+  if (frameId) {
+    t.push({ overlay: cldId(frameId), width: 614 });
     t.push({ flags: 'layer_apply', gravity: 'south', y: 80 });
   }
 
-  // ── LAYER 1 — Logo (top center) ──────────────────────────────────────────────
+  // ── LAYER 1 — Logo (top centre) ──────────────────────────────────────────
   if (logoPublicId) {
     t.push({ overlay: cldId(logoPublicId), width: 240 });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 55 });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.logo });
   }
 
-  // ── LAYER 2 — Line 1: plain white text (Oswald Bold 700 / Cairo Bold) ────────
+  // ── LAYER 2 — Line 1: plain white text ───────────────────────────────────
   if (line1?.trim()) {
     t.push({
       overlay: {
         font_family: pickFont(line1),
-        font_size: 52,
+        font_size:   52,
         font_weight: 'bold',
-        text: line1.trim(),
+        text:        line1.trim(),
       },
       color: 'rgb:ffffff',
       width: 900,
-      crop: 'fit',
+      crop:  'fit',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', y: 185 });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line1 });
   }
 
-  // ── LAYER 3 — Line 2: plashka, compact height, auto-width ───────────────────
+  // ── LAYER 3 — SVG plashka background ─────────────────────────────────────
   if (line2?.trim()) {
-    const step = {
-      overlay: {
-        font_family: pickFont(line2),
-        font_size: 58,
-        font_weight: 'extrabold',
-        letter_spacing: 2,
-        text: line2.trim(),
-      },
-      radius: 12,
-    };
+    const type    = plashkaType(plashkaStyle, !!line3?.trim());
+    const plashId = plashkaPublicIds?.[type]?.[accentColor];
 
-    if (plashkaStyle === 'bordered') {
-      step.color = 'rgb:ffffff';
-      step.background = 'rgb:0d0d0d';
-      step.border = `4px_solid_rgb:${hex}`;
-    } else {
-      step.color = `rgb:${textHex}`;
-      step.background = `rgb:${hex}`;
-      step.border = `8px_solid_rgb:${hex}`;
+    if (plashId) {
+      t.push({ overlay: cldId(plashId), width: PLASHKA_SVG_W });
+      t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.plashka });
     }
 
-    t.push(step);
-    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: 290 });
+    // ── LAYER 4 — Line 2 text on top of plashka ────────────────────────────
+    const line2Color = plashkaStyle === 'bordered' ? 'ffffff' : textHex;
+    t.push({
+      overlay: {
+        font_family:    pickFont(line2),
+        font_size:      58,
+        font_weight:    'extrabold',
+        letter_spacing: 1,
+        text:           line2.trim(),
+      },
+      color: `rgb:${line2Color}`,
+      width: PLASHKA_SVG_W - 40,
+      crop:  'fit',
+    });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line2Text });
   }
 
-  // ── LAYER 4 — Line 3: pill, auto-width (Cairo Bold) ─────────────────────────
-  if (line3?.trim()) {
+  // ── LAYER 5 — Line 3 text on top of pill (only for style A) ─────────────
+  if (line3?.trim() && plashkaStyle !== 'bordered') {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size: 44,
+        font_size:   44,
         font_weight: 'bold',
-        text: line3.trim(),
+        text:        line3.trim(),
       },
       color: `rgb:${hex}`,
-      background: 'rgb:111111',
-      border: `5px_solid_rgb:${hex}`,
-      radius: 30,
+      width: 420,
+      crop:  'fit',
     });
-    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: 375 });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line3Text });
   }
 
   return cloudinary.url(imagePublicId, {
     transformation: t,
-    format: 'jpg',
-    secure: true,
+    format:         'jpg',
+    secure:         true,
   });
 }
 
