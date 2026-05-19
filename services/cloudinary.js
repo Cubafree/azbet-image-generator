@@ -128,12 +128,12 @@ function buildOverlayUrl(imagePublicId, params) {
     const line2Color = plashkaStyle === 'bordered' ? 'ffffff' : textHex;
     t.push({
       overlay: {
-        font_family:    pickFont(line2),
-        font_size:      58,
-        font_weight:    'extrabold',
-        letter_spacing: 1,
-        text:           line2.trim(),
+        font_family: pickFont(line2),
+        font_size:   58,
+        font_weight: 'bold',
+        text:        line2.trim(),
       },
+      letter_spacing: 1,
       color: `rgb:${line2Color}`,
       width: PLASHKA_SVG_W - 40,
       crop:  'fit',
