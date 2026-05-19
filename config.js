@@ -99,22 +99,22 @@ const CLOUDINARY_CONFIG = {
   // a = filled+pill  b = filled only  c = bordered
   plashkaPublicIds: {
     a: {
-      cyan:   process.env.CLOUDINARY_PLASHKA_A_CYAN_PUBLIC_ID   || 'banner-gen/plashka-a-cyan',
-      green:  process.env.CLOUDINARY_PLASHKA_A_GREEN_PUBLIC_ID  || 'banner-gen/plashka-a-green',
-      purple: process.env.CLOUDINARY_PLASHKA_A_PURPLE_PUBLIC_ID || 'banner-gen/plashka-a-purple',
-      gold:   process.env.CLOUDINARY_PLASHKA_A_GOLD_PUBLIC_ID   || 'banner-gen/plashka-a-gold',
+      cyan:   process.env.CLOUDINARY_PLASHKA_A_CYAN_PUBLIC_ID   || 'banner-gen/plashkas/a-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_A_GREEN_PUBLIC_ID  || 'banner-gen/plashkas/a-green',
+      purple: process.env.CLOUDINARY_PLASHKA_A_PURPLE_PUBLIC_ID || 'banner-gen/plashkas/a-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_A_GOLD_PUBLIC_ID   || 'banner-gen/plashkas/a-gold',
     },
     b: {
-      cyan:   process.env.CLOUDINARY_PLASHKA_B_CYAN_PUBLIC_ID   || 'banner-gen/plashka-b-cyan',
-      green:  process.env.CLOUDINARY_PLASHKA_B_GREEN_PUBLIC_ID  || 'banner-gen/plashka-b-green',
-      purple: process.env.CLOUDINARY_PLASHKA_B_PURPLE_PUBLIC_ID || 'banner-gen/plashka-b-purple',
-      gold:   process.env.CLOUDINARY_PLASHKA_B_GOLD_PUBLIC_ID   || 'banner-gen/plashka-b-gold',
+      cyan:   process.env.CLOUDINARY_PLASHKA_B_CYAN_PUBLIC_ID   || 'banner-gen/plashkas/b-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_B_GREEN_PUBLIC_ID  || 'banner-gen/plashkas/b-green',
+      purple: process.env.CLOUDINARY_PLASHKA_B_PURPLE_PUBLIC_ID || 'banner-gen/plashkas/b-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_B_GOLD_PUBLIC_ID   || 'banner-gen/plashkas/b-gold',
     },
     c: {
-      cyan:   process.env.CLOUDINARY_PLASHKA_C_CYAN_PUBLIC_ID   || 'banner-gen/plashka-c-cyan',
-      green:  process.env.CLOUDINARY_PLASHKA_C_GREEN_PUBLIC_ID  || 'banner-gen/plashka-c-green',
-      purple: process.env.CLOUDINARY_PLASHKA_C_PURPLE_PUBLIC_ID || 'banner-gen/plashka-c-purple',
-      gold:   process.env.CLOUDINARY_PLASHKA_C_GOLD_PUBLIC_ID   || 'banner-gen/plashka-c-gold',
+      cyan:   process.env.CLOUDINARY_PLASHKA_C_CYAN_PUBLIC_ID   || 'banner-gen/plashkas/c-cyan',
+      green:  process.env.CLOUDINARY_PLASHKA_C_GREEN_PUBLIC_ID  || 'banner-gen/plashkas/c-green',
+      purple: process.env.CLOUDINARY_PLASHKA_C_PURPLE_PUBLIC_ID || 'banner-gen/plashkas/c-purple',
+      gold:   process.env.CLOUDINARY_PLASHKA_C_GOLD_PUBLIC_ID   || 'banner-gen/plashkas/c-gold',
     },
   },
 };

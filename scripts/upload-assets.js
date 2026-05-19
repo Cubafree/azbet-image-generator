@@ -31,7 +31,7 @@ const ASSETS = [
   ...STYLES.flatMap((s) =>
     COLORS.map((c) => ({
       file:     `assets/plashkas/plashka-${s}-${c}.svg`,
-      publicId: `banner-gen/plashka-${s}-${c}`,
+      publicId: `banner-gen/plashkas/${s}-${c}`,
       envVar:   `CLOUDINARY_PLASHKA_${s.toUpperCase()}_${c.toUpperCase()}_PUBLIC_ID`,
     }))
   ),
