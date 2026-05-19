@@ -272,6 +272,22 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .required { font-size: 10px; color: var(--accent2); font-weight: 400; margin-left: 4px; text-transform: none; letter-spacing: 0; }
 .field-hint { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
+/* Lang toggle */
+.lang-toggle {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.lang-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
 /* Toggle checkbox */
 .toggle-label {
   display: flex;

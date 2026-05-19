@@ -1,5 +1,101 @@
 let currentGenerationId = null;
 
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const I18N = {
+  ru: {
+    badge: 'Внутренний инструмент',
+    verticalLabel: 'Вертикаль',
+    casino: '🎰 Казино', sport: '⚽ Спорт',
+    countryLabel: 'Страна',
+    egypt: 'Египет', morocco: 'Марокко', algeria: 'Алжир', libya: 'Ливия',
+    subjectLabel: 'Персонаж',
+    woman: '👩 Женщина', man: '👨 Мужчина', object: '🎯 Объект',
+    sportTypeLabel: 'Вид спорта',
+    football: '⚽ Футбол', tennis: '🎾 Теннис', basketball: '🏀 Баскетбол', general: '🏆 Универсальный',
+    colorLabel: 'Акцентный цвет',
+    colorBlue: 'Синий', colorGreen: 'Зелёный', colorPurple: 'Фиолетовый', colorGold: 'Золотой',
+    sceneLabel: 'Описание сцены', optional: 'необязательно',
+    scenePlaceholder: 'Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)',
+    line1Label: 'Строка 1', line1Optional: 'без подложки, необязательно',
+    line1Hint: '≈ 25–30 латинских / ≈ 15–20 арабских символов',
+    line2Label: 'Строка 2', line2Required: 'на плашке, обязательно',
+    line2Hint: '≈ 15–20 латинских / ≈ 10–14 арабских символов',
+    plashkaStyleLabel: 'Стиль плашки', filled: 'Залитая', bordered: 'Контурная',
+    line3Toggle: 'Добавить доп. строку (пилл)', line3Label: 'Доп. строка',
+    line3Hint: '≈ 10–15 латинских / ≈ 7–10 арабских символов',
+    generateBtn: 'Генерировать', loadingText: 'Генерация… 20–40 секунд',
+    resultTitle: 'Результат', confirmBtn: '✓ Подтвердить', regenBtn: '↻ Перегенерировать', downloadBtn: '↓ Скачать',
+    historyTitle: 'История генераций',
+    colVertical: 'Вертикаль', colCountry: 'Страна', colCharacter: 'Персонаж',
+    colLine2: 'Строка 2', colStatus: 'Статус', colCreated: 'Создано',
+    emptyHistory: 'Генераций пока нет',
+    toastLine2Required: 'Строка 2 (на плашке) обязательна',
+    toastGenerated: 'Изображение сгенерировано и отправлено в Telegram ✓',
+    toastConfirmed: 'Баннер подтверждён ✓',
+    toastRegenerated: 'Новая версия сгенерирована ✓',
+    toastCopied: 'URL скопирован!',
+    errorGenerate: 'Ошибка генерации',
+    errorRegen: 'Ошибка перегенерации',
+  },
+  en: {
+    badge: 'Internal tool',
+    verticalLabel: 'Vertical',
+    casino: '🎰 Casino', sport: '⚽ Sport',
+    countryLabel: 'Country',
+    egypt: 'Egypt', morocco: 'Morocco', algeria: 'Algeria', libya: 'Libya',
+    subjectLabel: 'Character',
+    woman: '👩 Woman', man: '👨 Man', object: '🎯 Object',
+    sportTypeLabel: 'Sport type',
+    football: '⚽ Football', tennis: '🎾 Tennis', basketball: '🏀 Basketball', general: '🏆 General',
+    colorLabel: 'Accent color',
+    colorBlue: 'Blue', colorGreen: 'Green', colorPurple: 'Purple', colorGold: 'Gold',
+    sceneLabel: 'Scene description', optional: 'optional',
+    scenePlaceholder: 'Describe what you want to see (e.g. woman in kaftan holding a slot drum, Moroccan riad)',
+    line1Label: 'Line 1', line1Optional: 'no background, optional',
+    line1Hint: '≈ 25–30 Latin / ≈ 15–20 Arabic chars',
+    line2Label: 'Line 2', line2Required: 'on badge, required',
+    line2Hint: '≈ 15–20 Latin / ≈ 10–14 Arabic chars',
+    plashkaStyleLabel: 'Badge style', filled: 'Filled', bordered: 'Bordered',
+    line3Toggle: 'Add extra line (pill)', line3Label: 'Extra line',
+    line3Hint: '≈ 10–15 Latin / ≈ 7–10 Arabic chars',
+    generateBtn: 'Generate', loadingText: 'Generating… 20–40 sec',
+    resultTitle: 'Result', confirmBtn: '✓ Confirm', regenBtn: '↻ Regenerate', downloadBtn: '↓ Download',
+    historyTitle: 'Generation history',
+    colVertical: 'Vertical', colCountry: 'Country', colCharacter: 'Character',
+    colLine2: 'Line 2', colStatus: 'Status', colCreated: 'Created',
+    emptyHistory: 'No generations yet',
+    toastLine2Required: 'Line 2 (on badge) is required',
+    toastGenerated: 'Image generated and sent to Telegram ✓',
+    toastConfirmed: 'Banner confirmed ✓',
+    toastRegenerated: 'New version generated ✓',
+    toastCopied: 'URL copied!',
+    errorGenerate: 'Generation error',
+    errorRegen: 'Regeneration error',
+  },
+};
+
+let lang = localStorage.getItem('lang') || 'ru';
+
+function t(key) { return I18N[lang][key] || key; }
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n;
+    if (I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.dataset.i18nPlaceholder;
+    if (I18N[lang][key] !== undefined) el.placeholder = I18N[lang][key];
+  });
+  document.getElementById('langToggle').textContent = lang === 'ru' ? 'EN' : 'RU';
+}
+
+function toggleLang() {
+  lang = lang === 'ru' ? 'en' : 'ru';
+  localStorage.setItem('lang', lang);
+  applyLang();
+}
+
 // ── Sport Type visibility ──────────────────────────────────────────────────────
 function updateSportTypeVisibility() {
   const vertical = getRadioValue('vertical');
@@ -43,7 +139,7 @@ async function generate() {
     : null;
 
   if (!line2) {
-    showToast('Строка 2 (на плашке) обязательна', 'error');
+    showToast(t('toastLine2Required'), 'error');
     return;
   }
 
@@ -65,12 +161,12 @@ async function generate() {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка генерации');
+    if (!res.ok) throw new Error(data.error || t('errorGenerate'));
 
     currentGenerationId = data.generation.id;
     showPreview(data.generation);
     loadHistory();
-    showToast('Изображение сгенерировано и отправлено в Telegram ✓', 'success');
+    showToast(t('toastGenerated'), 'success');
   } catch (err) {
     showError(err.message);
   } finally {
@@ -86,7 +182,7 @@ async function confirmGen() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     loadHistory();
-    showToast('Баннер подтверждён ✓', 'success');
+    showToast(t('toastConfirmed'), 'success');
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -101,11 +197,11 @@ async function regenerate() {
   try {
     const res = await fetch(`/api/generate/${currentGenerationId}/regenerate`, { method: 'POST' });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка перегенерации');
+    if (!res.ok) throw new Error(data.error || t('errorRegen'));
     currentGenerationId = data.generation.id;
     showPreview(data.generation);
     loadHistory();
-    showToast('Новая версия сгенерирована ✓', 'success');
+    showToast(t('toastRegenerated'), 'success');
   } catch (err) {
     showError(err.message);
   } finally {
@@ -125,7 +221,7 @@ async function loadHistory() {
 function renderTable(rows) {
   const tbody = document.getElementById('historyBody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">Генераций пока нет</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">${t('emptyHistory')}</td></tr>`;
     return;
   }
   tbody.innerHTML = rows.map((g) => `
@@ -177,7 +273,7 @@ function hideError() {
 
 function copyUrl(elId) {
   const url = document.getElementById(elId).href;
-  navigator.clipboard.writeText(url).then(() => showToast('URL скопирован!', 'success'));
+  navigator.clipboard.writeText(url).then(() => showToast(t('toastCopied'), 'success'));
 }
 
 function showToast(msg, type = 'success') {
@@ -206,4 +302,5 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
 });
 
+applyLang();
 loadHistory();

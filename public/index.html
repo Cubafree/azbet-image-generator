@@ -13,172 +13,183 @@
     <div class="panel panel-left">
       <header class="app-header">
         <h1>Banner Gen</h1>
-        <span class="badge">Внутренний инструмент</span>
+        <span class="badge" data-i18n="badge">Внутренний инструмент</span>
+        <button id="langToggle" class="lang-toggle" onclick="toggleLang()">EN</button>
       </header>
 
       <div class="form-section">
 
         <!-- 1. Вертикаль -->
-        <span class="field-label">Вертикаль</span>
+        <span class="field-label" data-i18n="verticalLabel">Вертикаль</span>
         <div class="radio-group" id="verticalGroup">
           <label class="radio-card">
             <input type="radio" name="vertical" value="casino" checked />
-            <span>🎰 Казино</span>
+            <span data-i18n="casino">🎰 Казино</span>
           </label>
           <label class="radio-card">
             <input type="radio" name="vertical" value="sport" />
-            <span>⚽ Спорт</span>
+            <span data-i18n="sport">⚽ Спорт</span>
           </label>
         </div>
 
         <!-- 2. Страна -->
-        <span class="field-label">Страна</span>
+        <span class="field-label" data-i18n="countryLabel">Страна</span>
         <div class="radio-group" id="countryGroup">
           <label class="radio-card">
             <input type="radio" name="country" value="egypt" checked />
-            <span>Египет <em>(مصر)</em></span>
+            <span><span data-i18n="egypt">Египет</span> <em>(مصر)</em></span>
           </label>
           <label class="radio-card">
             <input type="radio" name="country" value="morocco" />
-            <span>Марокко <em>(المغرب)</em></span>
+            <span><span data-i18n="morocco">Марокко</span> <em>(المغرب)</em></span>
           </label>
           <label class="radio-card">
             <input type="radio" name="country" value="algeria" />
-            <span>Алжир <em>(الجزائر)</em></span>
+            <span><span data-i18n="algeria">Алжир</span> <em>(الجزائر)</em></span>
           </label>
           <label class="radio-card">
             <input type="radio" name="country" value="libya" />
-            <span>Ливия <em>(ليبيا)</em></span>
+            <span><span data-i18n="libya">Ливия</span> <em>(ليبيا)</em></span>
           </label>
         </div>
 
         <!-- 3. Персонаж -->
-        <span class="field-label">Персонаж</span>
+        <span class="field-label" data-i18n="subjectLabel">Персонаж</span>
         <div class="radio-group" id="subjectGroup">
           <label class="radio-card">
             <input type="radio" name="subject" value="woman" checked />
-            <span>👩 Женщина</span>
+            <span data-i18n="woman">👩 Женщина</span>
           </label>
           <label class="radio-card">
             <input type="radio" name="subject" value="man" />
-            <span>👨 Мужчина</span>
+            <span data-i18n="man">👨 Мужчина</span>
           </label>
           <label class="radio-card">
             <input type="radio" name="subject" value="object" />
-            <span>🎯 Объект</span>
+            <span data-i18n="object">🎯 Объект</span>
           </label>
         </div>
 
         <!-- 4. Вид спорта (условный) -->
         <div id="sportTypeRow">
-          <span class="field-label">Вид спорта</span>
+          <span class="field-label" data-i18n="sportTypeLabel">Вид спорта</span>
           <div class="radio-group" id="sportTypeGroup">
             <label class="radio-card">
               <input type="radio" name="sportType" value="football" checked />
-              <span>⚽ Футбол</span>
+              <span data-i18n="football">⚽ Футбол</span>
             </label>
             <label class="radio-card">
               <input type="radio" name="sportType" value="tennis" />
-              <span>🎾 Теннис</span>
+              <span data-i18n="tennis">🎾 Теннис</span>
             </label>
             <label class="radio-card">
               <input type="radio" name="sportType" value="basketball" />
-              <span>🏀 Баскетбол</span>
+              <span data-i18n="basketball">🏀 Баскетбол</span>
             </label>
             <label class="radio-card">
               <input type="radio" name="sportType" value="general" />
-              <span>🏆 Универсальный</span>
+              <span data-i18n="general">🏆 Универсальный</span>
             </label>
           </div>
         </div>
 
         <!-- 5. Акцентный цвет -->
-        <span class="field-label">Акцентный цвет</span>
+        <span class="field-label" data-i18n="colorLabel">Акцентный цвет</span>
         <div class="color-group" id="colorGroup">
           <label class="color-card" title="Синий / Электрик">
             <input type="radio" name="accentColor" value="cyan" checked />
             <span class="color-swatch" style="background:#00d4ff"></span>
-            <span class="color-name">Синий</span>
+            <span class="color-name" data-i18n="colorBlue">Синий</span>
           </label>
           <label class="color-card" title="Изумрудный">
             <input type="radio" name="accentColor" value="green" />
             <span class="color-swatch" style="background:#00e676"></span>
-            <span class="color-name">Зелёный</span>
+            <span class="color-name" data-i18n="colorGreen">Зелёный</span>
           </label>
           <label class="color-card" title="Фиолетовый">
             <input type="radio" name="accentColor" value="purple" />
             <span class="color-swatch" style="background:#8b5cf6"></span>
-            <span class="color-name">Фиолетовый</span>
+            <span class="color-name" data-i18n="colorPurple">Фиолетовый</span>
           </label>
           <label class="color-card" title="Золотой / Люкс">
             <input type="radio" name="accentColor" value="gold" />
             <span class="color-swatch" style="background:#ffd700"></span>
-            <span class="color-name">Золотой</span>
+            <span class="color-name" data-i18n="colorGold">Золотой</span>
           </label>
         </div>
 
         <!-- 6. Описание сцены -->
-        <label class="field-label" for="scenePrompt">Описание сцены <span class="optional">необязательно</span></label>
+        <label class="field-label" for="scenePrompt">
+          <span data-i18n="sceneLabel">Описание сцены</span>
+          <span class="optional" data-i18n="optional">необязательно</span>
+        </label>
         <textarea
           id="scenePrompt"
           class="input-field"
           rows="2"
+          data-i18n-placeholder="scenePlaceholder"
           placeholder="Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)"
         ></textarea>
 
-        <!-- 7. Строка 1 — простой белый текст без подложки -->
-        <label class="field-label" for="line1Input">Строка 1 <span class="optional">без подложки, необязательно</span></label>
+        <!-- 7. Строка 1 -->
+        <label class="field-label" for="line1Input">
+          <span data-i18n="line1Label">Строка 1</span>
+          <span class="optional" data-i18n="line1Optional">без подложки, необязательно</span>
+        </label>
         <input
           id="line1Input"
           type="text"
           class="input-field"
           placeholder="BONUS DE DÉPÔT"
         />
-        <small class="field-hint">≈ 25–30 латинских / ≈ 15–20 арабских символов</small>
+        <small class="field-hint" data-i18n="line1Hint">≈ 25–30 латинских / ≈ 15–20 арабских символов</small>
 
-        <!-- 8. Строка 2 — текст на плашке -->
-        <label class="field-label" for="line2Input">Строка 2 <span class="required">на плашке, обязательно</span></label>
+        <!-- 8. Строка 2 -->
+        <label class="field-label" for="line2Input">
+          <span data-i18n="line2Label">Строка 2</span>
+          <span class="required" data-i18n="line2Required">на плашке, обязательно</span>
+        </label>
         <input
           id="line2Input"
           type="text"
           class="input-field"
           placeholder="100% + 30 TOURS"
         />
-        <small class="field-hint">≈ 15–20 латинских / ≈ 10–14 арабских символов</small>
+        <small class="field-hint" data-i18n="line2Hint">≈ 15–20 латинских / ≈ 10–14 арабских символов</small>
 
         <!-- 9. Стиль плашки -->
-        <span class="field-label">Стиль плашки</span>
+        <span class="field-label" data-i18n="plashkaStyleLabel">Стиль плашки</span>
         <div class="radio-group">
           <label class="radio-card">
             <input type="radio" name="plashkaStyle" value="filled" checked />
-            <span>Залитая</span>
+            <span data-i18n="filled">Залитая</span>
           </label>
           <label class="radio-card">
             <input type="radio" name="plashkaStyle" value="bordered" />
-            <span>Контурная</span>
+            <span data-i18n="bordered">Контурная</span>
           </label>
         </div>
 
         <!-- 10. Доп. строка (пилл) -->
         <label class="toggle-label">
           <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
-          <span>Добавить доп. строку (пилл)</span>
+          <span data-i18n="line3Toggle">Добавить доп. строку (пилл)</span>
         </label>
         <div id="line3Row" class="hidden">
-          <label class="field-label" for="line3">Доп. строка</label>
+          <label class="field-label" for="line3" data-i18n="line3Label">Доп. строка</label>
           <input id="line3" type="text" class="input-field" placeholder="78K + 150FS" />
-          <small class="field-hint">≈ 10–15 латинских / ≈ 7–10 арабских символов</small>
+          <small class="field-hint" data-i18n="line3Hint">≈ 10–15 латинских / ≈ 7–10 арабских символов</small>
         </div>
 
         <button id="generateBtn" class="btn btn-primary" onclick="generate()">
-          <span class="btn-icon">✦</span> Генерировать
+          <span class="btn-icon">✦</span> <span data-i18n="generateBtn">Генерировать</span>
         </button>
       </div>
 
       <!-- Загрузка -->
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
-        <p>Генерация… 20–40 секунд</p>
+        <p data-i18n="loadingText">Генерация… 20–40 секунд</p>
       </div>
 
       <!-- Ошибка -->
@@ -195,17 +206,17 @@
             <img id="previewImg" src="" alt="Баннер" />
           </div>
           <div class="preview-controls-col">
-            <p class="preview-section-title">Результат</p>
+            <p class="preview-section-title" data-i18n="resultTitle">Результат</p>
             <div class="preview-action-btns">
-              <button class="btn btn-confirm" onclick="confirmGen()">✓ Подтвердить</button>
-              <button class="btn btn-regen" onclick="regenerate()">↻ Перегенерировать</button>
+              <button class="btn btn-confirm" onclick="confirmGen()" data-i18n="confirmBtn">✓ Подтвердить</button>
+              <button class="btn btn-regen" onclick="regenerate()" data-i18n="regenBtn">↻ Перегенерировать</button>
             </div>
             <div class="preview-url-block">
               <span class="url-label">URL</span>
               <a id="previewUrl" href="#" target="_blank" class="url-value">—</a>
               <button class="copy-btn" onclick="copyUrl('previewUrl')" title="Скопировать">⎘</button>
             </div>
-            <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank">
+            <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank" data-i18n="downloadBtn">
               ↓ Скачать
             </a>
           </div>
@@ -214,7 +225,7 @@
 
       <!-- История -->
       <div class="table-header">
-        <h2>История генераций</h2>
+        <h2 data-i18n="historyTitle">История генераций</h2>
         <button class="refresh-btn" onclick="loadHistory()" title="Обновить">↻</button>
       </div>
       <div class="table-wrap">
@@ -222,17 +233,17 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Вертикаль</th>
-              <th>Страна</th>
-              <th>Персонаж</th>
-              <th>Строка 2</th>
-              <th>Статус</th>
+              <th data-i18n="colVertical">Вертикаль</th>
+              <th data-i18n="colCountry">Страна</th>
+              <th data-i18n="colCharacter">Персонаж</th>
+              <th data-i18n="colLine2">Строка 2</th>
+              <th data-i18n="colStatus">Статус</th>
               <th>URL</th>
-              <th>Создано</th>
+              <th data-i18n="colCreated">Создано</th>
             </tr>
           </thead>
           <tbody id="historyBody">
-            <tr><td colspan="8" class="empty">Генераций пока нет</td></tr>
+            <tr><td colspan="8" class="empty" data-i18n="emptyHistory">Генераций пока нет</td></tr>
           </tbody>
         </table>
       </div>
