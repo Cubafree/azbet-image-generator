@@ -67,6 +67,7 @@ async function uploadAsset(filePath, publicId) {
     public_id:     publicId,
     resource_type: 'image',
     overwrite:     true,
+    invalidate:    true,  // purge CDN cache on overwrite
   });
 }
 
