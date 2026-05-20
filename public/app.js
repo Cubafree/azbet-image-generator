@@ -117,10 +117,7 @@ const GOOGLE_FONTS = [
 ];
 
 function onFontChange(value) {
-  // Load Google Font dynamically
-  const encoded = value.replace(/ /g, '+');
-  document.getElementById('googleFontLink').href =
-    `https://fonts.googleapis.com/css2?family=${encoded}:wght@700&display=swap`;
+  // All fonts already loaded upfront — just update the preview element
   document.getElementById('fontPreview').style.fontFamily = `'${value}', sans-serif`;
 }
 
@@ -285,6 +282,7 @@ function skCollectCustomY() {
 
 function backToSkeleton() {
   hidePreview();
+  currentGenerationId = null; // clear stale ref — new generate() will set a fresh ID
 }
 
 // ── Sport Type visibility ─────────────────────────────────────────────────────
@@ -311,7 +309,10 @@ function toggleLine3() {
   const show = document.getElementById('line3Toggle').checked;
   document.getElementById('line3Row').classList.toggle('hidden', !show);
   document.getElementById('skPill').classList.toggle('hidden', !show);
-  if (!show) document.getElementById('line3').value = '';
+  if (!show) {
+    document.getElementById('line3').value  = '';
+    document.getElementById('size3').value  = '44'; // reset to default
+  }
 }
 
 // ── Generate ──────────────────────────────────────────────────────────────────
@@ -462,6 +463,13 @@ function hidePreview() {
 function setLoading(on) {
   document.getElementById('loading').classList.toggle('hidden', !on);
   document.getElementById('generateBtn').disabled = on;
+  // Disable skeleton dragging while a request is in flight
+  const canvas = document.getElementById('skCanvas');
+  if (canvas) {
+    canvas.style.pointerEvents = on ? 'none' : '';
+    canvas.style.opacity       = on ? '0.45' : '';
+    canvas.style.transition    = 'opacity 0.2s';
+  }
 }
 
 function showError(msg) {

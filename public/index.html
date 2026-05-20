@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banner Gen</title>
   <link rel="stylesheet" href="style.css" />
-  <link id="googleFontLink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" />
+  <!-- All 12 display fonts loaded upfront so dropdown options render correctly -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Bebas+Neue&family=Anton&family=Barlow+Condensed:wght@700&family=Teko:wght@700&family=Montserrat:wght@700&family=Raleway:wght@700&family=Roboto:wght@700&family=Poppins:wght@700&family=Inter:wght@700&family=Exo+2:wght@700&family=Orbitron:wght@700&display=swap" />
 </head>
 <body>
   <div class="layout">
@@ -206,18 +207,18 @@
         <!-- 12. Типографика -->
         <span class="field-label" data-i18n="fontLabel">Шрифт</span>
         <select id="fontFamily" class="input-field font-select" onchange="onFontChange(this.value)">
-          <option value="Oswald">Oswald — Condensed Bold</option>
-          <option value="Bebas Neue">Bebas Neue — Display</option>
-          <option value="Anton">Anton — Impact</option>
-          <option value="Barlow Condensed">Barlow Condensed — Modern</option>
-          <option value="Teko">Teko — Compact</option>
-          <option value="Montserrat">Montserrat — Versatile</option>
-          <option value="Raleway">Raleway — Elegant</option>
-          <option value="Roboto">Roboto — Neutral</option>
-          <option value="Poppins">Poppins — Rounded</option>
-          <option value="Inter">Inter — Technical</option>
-          <option value="Exo 2">Exo 2 — Futuristic</option>
-          <option value="Orbitron">Orbitron — Sci-Fi</option>
+          <option value="Oswald"           style="font-family:'Oswald',sans-serif">Oswald — Condensed Bold</option>
+          <option value="Bebas Neue"       style="font-family:'Bebas Neue',sans-serif">Bebas Neue — Display</option>
+          <option value="Anton"            style="font-family:'Anton',sans-serif">Anton — Impact</option>
+          <option value="Barlow Condensed" style="font-family:'Barlow Condensed',sans-serif">Barlow Condensed — Modern</option>
+          <option value="Teko"             style="font-family:'Teko',sans-serif">Teko — Compact</option>
+          <option value="Montserrat"       style="font-family:'Montserrat',sans-serif">Montserrat — Versatile</option>
+          <option value="Raleway"          style="font-family:'Raleway',sans-serif">Raleway — Elegant</option>
+          <option value="Roboto"           style="font-family:'Roboto',sans-serif">Roboto — Neutral</option>
+          <option value="Poppins"          style="font-family:'Poppins',sans-serif">Poppins — Rounded</option>
+          <option value="Inter"            style="font-family:'Inter',sans-serif">Inter — Technical</option>
+          <option value="Exo 2"            style="font-family:'Exo 2',sans-serif">Exo 2 — Futuristic</option>
+          <option value="Orbitron"         style="font-family:'Orbitron',sans-serif">Orbitron — Sci-Fi</option>
         </select>
         <div class="font-preview" id="fontPreview">AaBb 100% BONUS 78K</div>
 
