@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banner Gen</title>
   <link rel="stylesheet" href="style.css" />
+  <link id="googleFontLink" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" />
 </head>
 <body>
   <div class="layout">
 
-    <!-- ── Левая панель: только форма ── -->
+    <!-- ── Левая панель: форма ── -->
     <div class="panel panel-left">
       <header class="app-header">
         <h1>Banner Gen</h1>
@@ -70,7 +71,7 @@
           </label>
         </div>
 
-        <!-- 4. Вид спорта (условный) -->
+        <!-- 4. Вид спорта -->
         <div id="sportTypeRow">
           <span class="field-label" data-i18n="sportTypeLabel">Вид спорта</span>
           <div class="radio-group" id="sportTypeGroup">
@@ -96,29 +97,42 @@
         <!-- 5. Акцентный цвет -->
         <span class="field-label" data-i18n="colorLabel">Акцентный цвет</span>
         <div class="color-group" id="colorGroup">
-          <label class="color-card" title="Синий / Электрик">
-            <input type="radio" name="accentColor" value="cyan" checked />
+          <label class="color-card">
+            <input type="radio" name="accentColor" value="cyan" checked onchange="onColorChange()" />
             <span class="color-swatch" style="background:#00d4ff"></span>
             <span class="color-name" data-i18n="colorBlue">Синий</span>
           </label>
-          <label class="color-card" title="Изумрудный">
-            <input type="radio" name="accentColor" value="green" />
+          <label class="color-card">
+            <input type="radio" name="accentColor" value="green" onchange="onColorChange()" />
             <span class="color-swatch" style="background:#00e676"></span>
             <span class="color-name" data-i18n="colorGreen">Зелёный</span>
           </label>
-          <label class="color-card" title="Фиолетовый">
-            <input type="radio" name="accentColor" value="purple" />
+          <label class="color-card">
+            <input type="radio" name="accentColor" value="purple" onchange="onColorChange()" />
             <span class="color-swatch" style="background:#8b5cf6"></span>
             <span class="color-name" data-i18n="colorPurple">Фиолетовый</span>
           </label>
-          <label class="color-card" title="Золотой / Люкс">
-            <input type="radio" name="accentColor" value="gold" />
+          <label class="color-card">
+            <input type="radio" name="accentColor" value="gold" onchange="onColorChange()" />
             <span class="color-swatch" style="background:#ffd700"></span>
             <span class="color-name" data-i18n="colorGold">Золотой</span>
           </label>
         </div>
 
-        <!-- 6. Описание сцены -->
+        <!-- 6. Размер изображения -->
+        <span class="field-label" data-i18n="sizeLabel">Размер изображения</span>
+        <div class="radio-group" id="imageSizeGroup">
+          <label class="radio-card">
+            <input type="radio" name="imageSize" value="portrait" checked onchange="skInit()" />
+            <span data-i18n="sizePortrait">📱 Портрет 9:16</span>
+          </label>
+          <label class="radio-card">
+            <input type="radio" name="imageSize" value="square" onchange="skInit()" />
+            <span data-i18n="sizeSquare">⬛ Квадрат 1:1</span>
+          </label>
+        </div>
+
+        <!-- 7. Описание сцены -->
         <label class="field-label" for="scenePrompt">
           <span data-i18n="sceneLabel">Описание сцены</span>
           <span class="optional" data-i18n="optional">необязательно</span>
@@ -131,33 +145,35 @@
           placeholder="Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)"
         ></textarea>
 
-        <!-- 7. Строка 1 -->
+        <!-- 8. Строка 1 -->
         <label class="field-label" for="line1Input">
           <span data-i18n="line1Label">Строка 1</span>
           <span class="optional" data-i18n="line1Optional">без подложки, необязательно</span>
         </label>
-        <input
-          id="line1Input"
-          type="text"
-          class="input-field"
-          placeholder="BONUS DE DÉPÔT"
-        />
+        <div class="line-input-row">
+          <input id="line1Input" type="text" class="input-field" placeholder="BONUS DE DÉPÔT" />
+          <div class="size-ctrl">
+            <span class="size-ctrl-label">px</span>
+            <input type="number" id="size1" min="24" max="90" value="52" class="size-input" />
+          </div>
+        </div>
         <small class="field-hint" data-i18n="line1Hint">≈ 25–30 латинских / ≈ 15–20 арабских символов</small>
 
-        <!-- 8. Строка 2 -->
+        <!-- 9. Строка 2 -->
         <label class="field-label" for="line2Input">
           <span data-i18n="line2Label">Строка 2</span>
           <span class="required" data-i18n="line2Required">на плашке, обязательно</span>
         </label>
-        <input
-          id="line2Input"
-          type="text"
-          class="input-field"
-          placeholder="100% + 30 TOURS"
-        />
+        <div class="line-input-row">
+          <input id="line2Input" type="text" class="input-field" placeholder="100% + 30 TOURS" />
+          <div class="size-ctrl">
+            <span class="size-ctrl-label">px</span>
+            <input type="number" id="size2" min="24" max="90" value="58" class="size-input" />
+          </div>
+        </div>
         <small class="field-hint" data-i18n="line2Hint">≈ 15–20 латинских / ≈ 10–14 арабских символов</small>
 
-        <!-- 9. Стиль плашки -->
+        <!-- 10. Стиль плашки -->
         <span class="field-label" data-i18n="plashkaStyleLabel">Стиль плашки</span>
         <div class="radio-group">
           <label class="radio-card">
@@ -170,16 +186,40 @@
           </label>
         </div>
 
-        <!-- 10. Доп. строка (пилл) -->
+        <!-- 11. Строка 3 (пилл) -->
         <label class="toggle-label">
           <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
           <span data-i18n="line3Toggle">Добавить доп. строку (пилл)</span>
         </label>
         <div id="line3Row" class="hidden">
           <label class="field-label" for="line3" data-i18n="line3Label">Доп. строка</label>
-          <input id="line3" type="text" class="input-field" placeholder="78K + 150FS" />
+          <div class="line-input-row">
+            <input id="line3" type="text" class="input-field" placeholder="78K + 150FS" />
+            <div class="size-ctrl">
+              <span class="size-ctrl-label">px</span>
+              <input type="number" id="size3" min="16" max="72" value="44" class="size-input" />
+            </div>
+          </div>
           <small class="field-hint" data-i18n="line3Hint">≈ 10–15 латинских / ≈ 7–10 арабских символов</small>
         </div>
+
+        <!-- 12. Типографика -->
+        <span class="field-label" data-i18n="fontLabel">Шрифт</span>
+        <select id="fontFamily" class="input-field font-select" onchange="onFontChange(this.value)">
+          <option value="Oswald">Oswald — Condensed Bold</option>
+          <option value="Bebas Neue">Bebas Neue — Display</option>
+          <option value="Anton">Anton — Impact</option>
+          <option value="Barlow Condensed">Barlow Condensed — Modern</option>
+          <option value="Teko">Teko — Compact</option>
+          <option value="Montserrat">Montserrat — Versatile</option>
+          <option value="Raleway">Raleway — Elegant</option>
+          <option value="Roboto">Roboto — Neutral</option>
+          <option value="Poppins">Poppins — Rounded</option>
+          <option value="Inter">Inter — Technical</option>
+          <option value="Exo 2">Exo 2 — Futuristic</option>
+          <option value="Orbitron">Orbitron — Sci-Fi</option>
+        </select>
+        <div class="font-preview" id="fontPreview">AaBb 100% BONUS 78K</div>
 
         <button id="generateBtn" class="btn btn-primary" onclick="generate()">
           <span class="btn-icon">✦</span> <span data-i18n="generateBtn">Генерировать</span>
@@ -196,8 +236,36 @@
       <div id="error" class="error-box hidden"></div>
     </div>
 
-    <!-- ── Правая панель: превью + история ── -->
+    <!-- ── Правая панель: скелетон + превью + история ── -->
     <div class="panel panel-right">
+
+      <!-- Скелетон (показывается до первой генерации) -->
+      <div id="skeletonPanel" class="skeleton-panel">
+        <div class="skeleton-hdr">
+          <span class="skeleton-title" data-i18n="skTitle">Расположение слоёв</span>
+          <button class="btn-reset-pos" onclick="resetPositions()" data-i18n="skReset">↺ Сброс</button>
+        </div>
+        <div class="skeleton-wrap">
+          <div class="sk-canvas" id="skCanvas">
+            <div class="sk-elem sk-logo"    id="skLogo"    data-layer="logo">
+              <span data-i18n="skLogo">Logo</span>
+            </div>
+            <div class="sk-elem sk-line1"   id="skLine1"   data-layer="line1">
+              <span data-i18n="skLine1">Строка 1</span>
+            </div>
+            <div class="sk-elem sk-plashka" id="skPlashka" data-layer="plashka">
+              <span data-i18n="skLine2">Строка 2</span>
+            </div>
+            <div class="sk-elem sk-pill hidden" id="skPill" data-layer="pill">
+              <span data-i18n="skLine3">Строка 3</span>
+            </div>
+            <div class="sk-elem sk-frame"   id="skFrame"   data-layer="frame">
+              <span data-i18n="skBadges">Badges</span>
+            </div>
+          </div>
+        </div>
+        <p class="skeleton-hint" data-i18n="skHint">Перетаскивайте элементы · позиции передаются в генерацию</p>
+      </div>
 
       <!-- Превью (скрыто до генерации) -->
       <div id="previewSection" class="preview-section hidden">
@@ -219,6 +287,9 @@
             <a id="downloadBtn" href="#" download="banner.jpg" class="btn btn-download" target="_blank" data-i18n="downloadBtn">
               ↓ Скачать
             </a>
+            <button class="btn btn-secondary" onclick="backToSkeleton()" data-i18n="backToLayout" style="margin-top:8px">
+              ← Редактировать расположение
+            </button>
           </div>
         </div>
       </div>

@@ -14,6 +14,8 @@ const I18N = {
     football: '⚽ Футбол', tennis: '🎾 Теннис', basketball: '🏀 Баскетбол', general: '🏆 Универсальный',
     colorLabel: 'Акцентный цвет',
     colorBlue: 'Синий', colorGreen: 'Зелёный', colorPurple: 'Фиолетовый', colorGold: 'Золотой',
+    sizeLabel: 'Размер изображения',
+    sizePortrait: '📱 Портрет 9:16', sizeSquare: '⬛ Квадрат 1:1',
     sceneLabel: 'Описание сцены', optional: 'необязательно',
     scenePlaceholder: 'Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)',
     line1Label: 'Строка 1', line1Optional: 'без подложки, необязательно',
@@ -23,12 +25,17 @@ const I18N = {
     plashkaStyleLabel: 'Стиль плашки', filled: 'Залитая', bordered: 'Контурная',
     line3Toggle: 'Добавить доп. строку (пилл)', line3Label: 'Доп. строка',
     line3Hint: '≈ 10–15 латинских / ≈ 7–10 арабских символов',
+    fontLabel: 'Шрифт',
     generateBtn: 'Генерировать', loadingText: 'Генерация… 20–40 секунд',
-    resultTitle: 'Результат', confirmBtn: '✓ Подтвердить', regenBtn: '↻ Перегенерировать', downloadBtn: '↓ Скачать',
+    resultTitle: 'Результат', confirmBtn: '✓ Подтвердить', regenBtn: '↻ Перегенерировать',
+    downloadBtn: '↓ Скачать', backToLayout: '← Редактировать расположение',
     historyTitle: 'История генераций',
     colVertical: 'Вертикаль', colCountry: 'Страна', colCharacter: 'Персонаж',
     colLine2: 'Строка 2', colStatus: 'Статус', colCreated: 'Создано',
     emptyHistory: 'Генераций пока нет',
+    skTitle: 'Расположение слоёв', skReset: '↺ Сброс',
+    skLogo: 'Logo', skLine1: 'Строка 1', skLine2: 'Строка 2', skLine3: 'Строка 3', skBadges: 'Badges',
+    skHint: 'Перетаскивайте элементы · позиции передаются в генерацию',
     toastLine2Required: 'Строка 2 (на плашке) обязательна',
     toastGenerated: 'Изображение сгенерировано и отправлено в Telegram ✓',
     toastConfirmed: 'Баннер подтверждён ✓',
@@ -49,6 +56,8 @@ const I18N = {
     football: '⚽ Football', tennis: '🎾 Tennis', basketball: '🏀 Basketball', general: '🏆 General',
     colorLabel: 'Accent color',
     colorBlue: 'Blue', colorGreen: 'Green', colorPurple: 'Purple', colorGold: 'Gold',
+    sizeLabel: 'Image size',
+    sizePortrait: '📱 Portrait 9:16', sizeSquare: '⬛ Square 1:1',
     sceneLabel: 'Scene description', optional: 'optional',
     scenePlaceholder: 'Describe what you want to see (e.g. woman in kaftan holding a slot drum, Moroccan riad)',
     line1Label: 'Line 1', line1Optional: 'no background, optional',
@@ -58,12 +67,17 @@ const I18N = {
     plashkaStyleLabel: 'Badge style', filled: 'Filled', bordered: 'Bordered',
     line3Toggle: 'Add extra line (pill)', line3Label: 'Extra line',
     line3Hint: '≈ 10–15 Latin / ≈ 7–10 Arabic chars',
+    fontLabel: 'Font',
     generateBtn: 'Generate', loadingText: 'Generating… 20–40 sec',
-    resultTitle: 'Result', confirmBtn: '✓ Confirm', regenBtn: '↻ Regenerate', downloadBtn: '↓ Download',
+    resultTitle: 'Result', confirmBtn: '✓ Confirm', regenBtn: '↻ Regenerate',
+    downloadBtn: '↓ Download', backToLayout: '← Edit layout',
     historyTitle: 'Generation history',
     colVertical: 'Vertical', colCountry: 'Country', colCharacter: 'Character',
     colLine2: 'Line 2', colStatus: 'Status', colCreated: 'Created',
     emptyHistory: 'No generations yet',
+    skTitle: 'Layer positions', skReset: '↺ Reset',
+    skLogo: 'Logo', skLine1: 'Line 1', skLine2: 'Line 2', skLine3: 'Line 3', skBadges: 'Badges',
+    skHint: 'Drag elements · positions are used in generation',
     toastLine2Required: 'Line 2 (on badge) is required',
     toastGenerated: 'Image generated and sent to Telegram ✓',
     toastConfirmed: 'Banner confirmed ✓',
@@ -96,13 +110,189 @@ function toggleLang() {
   applyLang();
 }
 
-// ── Sport Type visibility ──────────────────────────────────────────────────────
+// ── Font ──────────────────────────────────────────────────────────────────────
+const GOOGLE_FONTS = [
+  'Oswald','Bebas Neue','Anton','Barlow Condensed','Teko',
+  'Montserrat','Raleway','Roboto','Poppins','Inter','Exo 2','Orbitron',
+];
+
+function onFontChange(value) {
+  // Load Google Font dynamically
+  const encoded = value.replace(/ /g, '+');
+  document.getElementById('googleFontLink').href =
+    `https://fonts.googleapis.com/css2?family=${encoded}:wght@700&display=swap`;
+  document.getElementById('fontPreview').style.fontFamily = `'${value}', sans-serif`;
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+const SK_SCALE    = 256 / 1024;   // 0.25 — canvas px per image px
+const SK_CANVAS_H = { portrait: 384, square: 256 };
+const SK_IMAGE_H  = { portrait: 1536, square: 1024 };
+
+// Default Y positions in IMAGE space (px from top, except frameY = px from bottom)
+const SK_DEFAULTS = {
+  portrait: { logo: 55, line1: 220, plashka: 275, frameY: 80 },
+  square:   { logo: 40, line1: 150, plashka: 185, frameY: 60 },
+};
+
+// Element heights in canvas px (derived from image space with SK_SCALE)
+const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34 };
+
+let skPositions = {};  // overridden positions in IMAGE space
+
+const SK_ACCENT_COLORS = {
+  cyan:   'rgba(6,182,212,',
+  green:  'rgba(0,230,118,',
+  purple: 'rgba(139,92,246,',
+  gold:   'rgba(255,215,0,',
+};
+
+function getImageSize() {
+  return getRadioValue('imageSize') || 'portrait';
+}
+
+function skInit() {
+  const size    = getImageSize();
+  const canvasH = SK_CANVAS_H[size];
+  const d       = SK_DEFAULTS[size];
+
+  document.getElementById('skCanvas').style.height = canvasH + 'px';
+  skPositions = {};
+
+  skPlace('skLogo',    d.logo    * SK_SCALE);
+  skPlace('skLine1',   d.line1   * SK_SCALE);
+  skPlace('skPlashka', d.plashka * SK_SCALE);
+
+  const pillCanvasY = (d.plashka + 100 + 6) * SK_SCALE;
+  skPlace('skPill', pillCanvasY);
+
+  // Frame: positioned from bottom
+  const frameCanvasTop = canvasH - d.frameY * SK_SCALE - SK_H.frame;
+  skPlace('skFrame', frameCanvasTop);
+
+  updateSkeletonColor();
+}
+
+function skPlace(id, canvasY) {
+  const el = document.getElementById(id);
+  if (el) el.style.top = Math.round(canvasY) + 'px';
+}
+
+function updateSkeletonColor() {
+  const color = getRadioValue('accentColor') || 'cyan';
+  const base  = SK_ACCENT_COLORS[color] || SK_ACCENT_COLORS.cyan;
+
+  const plashka = document.getElementById('skPlashka');
+  const pill    = document.getElementById('skPill');
+
+  if (plashka) {
+    plashka.style.background   = base + '0.35)';
+    plashka.style.borderColor  = base + '0.7)';
+    plashka.style.color        = base + '0.95)';
+  }
+  if (pill) {
+    pill.style.borderColor = base + '0.7)';
+    pill.style.color       = base + '0.8)';
+    pill.style.background  = base + '0.06)';
+  }
+}
+
+function onColorChange() {
+  updateSkeletonColor();
+}
+
+function makeDraggable(elId, layer) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+
+  el.addEventListener('mousedown', startDrag);
+  el.addEventListener('touchstart', startDrag, { passive: false });
+
+  function startDrag(e) {
+    e.preventDefault();
+    const startClientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const startTop     = parseInt(el.style.top) || 0;
+
+    el.classList.add('is-dragging');
+
+    // Tooltip
+    const tip = document.createElement('div');
+    tip.className = 'sk-tooltip';
+    el.appendChild(tip);
+
+    function onMove(e) {
+      const curY  = e.touches ? e.touches[0].clientY : e.clientY;
+      const dy    = curY - startClientY;
+      const canvas = document.getElementById('skCanvas');
+      const maxTop = canvas.offsetHeight - el.offsetHeight;
+      const newTop = Math.max(0, Math.min(maxTop, startTop + dy));
+
+      el.style.top = newTop + 'px';
+
+      const size    = getImageSize();
+      const canvasH = SK_CANVAS_H[size];
+
+      if (layer === 'frame') {
+        // distance from bottom: (canvasH - top - elemH) / SK_SCALE
+        const fromBottom = Math.round((canvasH - newTop - SK_H.frame) / SK_SCALE);
+        skPositions.frameY = Math.max(0, fromBottom);
+        tip.textContent = `↑ ${skPositions.frameY}px`;
+      } else {
+        const imageY = Math.round(newTop / SK_SCALE);
+        skPositions[layer] = imageY;
+        tip.textContent = `y: ${imageY}px`;
+
+        // Plashka drags pill along
+        if (layer === 'plashka') {
+          const pillTop = newTop + SK_H.plashka + Math.round(6 * SK_SCALE);
+          skPlace('skPill', pillTop);
+        }
+      }
+    }
+
+    function onUp() {
+      el.classList.remove('is-dragging');
+      tip.remove();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+}
+
+function resetPositions() {
+  skInit();
+}
+
+function skCollectCustomY() {
+  const size = getImageSize();
+  const d    = SK_DEFAULTS[size];
+  const out  = {};
+
+  if (skPositions.logo    !== undefined && skPositions.logo    !== d.logo)    out.logo    = skPositions.logo;
+  if (skPositions.line1   !== undefined && skPositions.line1   !== d.line1)   out.line1   = skPositions.line1;
+  if (skPositions.plashka !== undefined && skPositions.plashka !== d.plashka) out.plashka = skPositions.plashka;
+  if (skPositions.frameY  !== undefined && skPositions.frameY  !== d.frameY)  out.frameY  = skPositions.frameY;
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function backToSkeleton() {
+  hidePreview();
+}
+
+// ── Sport Type visibility ─────────────────────────────────────────────────────
 function updateSportTypeVisibility() {
   const vertical = getRadioValue('vertical');
-  const subject = getRadioValue('subject');
-  const row = document.getElementById('sportTypeRow');
-  const show = vertical === 'sport' && subject !== 'object';
-  row.classList.toggle('hidden', !show);
+  const subject  = getRadioValue('subject');
+  const row      = document.getElementById('sportTypeRow');
+  row.classList.toggle('hidden', !(vertical === 'sport' && subject !== 'object'));
 }
 
 document.querySelectorAll('input[name="vertical"], input[name="subject"]').forEach((el) => {
@@ -120,23 +310,32 @@ function getRadioValue(name) {
 function toggleLine3() {
   const show = document.getElementById('line3Toggle').checked;
   document.getElementById('line3Row').classList.toggle('hidden', !show);
+  document.getElementById('skPill').classList.toggle('hidden', !show);
   if (!show) document.getElementById('line3').value = '';
 }
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 async function generate() {
-  const vertical = getRadioValue('vertical');
-  const country = getRadioValue('country');
-  const subject = getRadioValue('subject');
-  const sportType = getRadioValue('sportType');
+  const vertical    = getRadioValue('vertical');
+  const country     = getRadioValue('country');
+  const subject     = getRadioValue('subject');
+  const sportType   = getRadioValue('sportType');
   const accentColor = getRadioValue('accentColor');
+  const imageSize   = getRadioValue('imageSize') || 'portrait';
   const scenePrompt = document.getElementById('scenePrompt').value.trim();
-  const line1 = document.getElementById('line1Input').value.trim();
-  const line2 = document.getElementById('line2Input').value.trim();
+  const line1       = document.getElementById('line1Input').value.trim();
+  const line2       = document.getElementById('line2Input').value.trim();
   const plashkaStyle = getRadioValue('plashkaStyle');
-  const line3Raw = document.getElementById('line3Toggle').checked
+  const line3Raw    = document.getElementById('line3Toggle').checked
     ? document.getElementById('line3').value.trim()
     : null;
+  const fontFamily  = document.getElementById('fontFamily').value || 'Oswald';
+  const fontSize    = {
+    line1: parseInt(document.getElementById('size1').value) || 52,
+    line2: parseInt(document.getElementById('size2').value) || 58,
+    line3: parseInt(document.getElementById('size3').value) || 44,
+  };
+  const customY = skCollectCustomY();
 
   if (!line2) {
     showToast(t('toastLine2Required'), 'error');
@@ -148,16 +347,20 @@ async function generate() {
   hidePreview();
 
   try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
+    const body = {
+      vertical, country, subject, sportType, accentColor,
+      scenePrompt, imageSize, fontFamily, fontSize,
+      line1: line1 || null,
+      line2,
+      plashkaStyle,
+      ...(line3Raw ? { line3: line3Raw } : {}),
+      ...(customY  ? { customY }         : {}),
+    };
+
+    const res  = await fetch('/api/generate', {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        vertical, country, subject, sportType, accentColor, scenePrompt,
-        line1: line1 || null,
-        line2,
-        plashkaStyle,
-        ...(line3Raw ? { line3: line3Raw } : {}),
-      }),
+      body:    JSON.stringify(body),
     });
 
     const data = await res.json();
@@ -178,7 +381,7 @@ async function generate() {
 async function confirmGen() {
   if (!currentGenerationId) return;
   try {
-    const res = await fetch(`/api/generate/${currentGenerationId}/confirm`, { method: 'POST' });
+    const res  = await fetch(`/api/generate/${currentGenerationId}/confirm`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     loadHistory();
@@ -195,7 +398,7 @@ async function regenerate() {
   hidePreview();
   hideError();
   try {
-    const res = await fetch(`/api/generate/${currentGenerationId}/regenerate`, { method: 'POST' });
+    const res  = await fetch(`/api/generate/${currentGenerationId}/regenerate`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || t('errorRegen'));
     currentGenerationId = data.generation.id;
@@ -228,8 +431,8 @@ function renderTable(rows) {
     <tr>
       <td>${g.id}</td>
       <td>${g.vertical ? capFirst(g.vertical) : '—'}</td>
-      <td>${g.country ? capFirst(g.country) : '—'}</td>
-      <td>${g.subject ? capFirst(g.subject) : '—'}</td>
+      <td>${g.country  ? capFirst(g.country)  : '—'}</td>
+      <td>${g.subject  ? capFirst(g.subject)  : '—'}</td>
       <td title="${escHtml(g.line2 || g.banner_text)}">${escHtml(truncate(g.line2 || g.banner_text || '', 30))}</td>
       <td><span class="status-badge status-${g.status}">${g.status}</span></td>
       <td>${g.final_url ? `<a class="table-url" href="${escHtml(g.final_url)}" target="_blank">Open ↗</a>` : '—'}</td>
@@ -240,20 +443,20 @@ function renderTable(rows) {
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function showPreview(generation) {
-  const finalUrl = generation.final_url;
+  document.getElementById('skeletonPanel').classList.add('hidden');
+  document.getElementById('previewImg').src = generation.final_url;
 
-  document.getElementById('previewImg').src = finalUrl;
   const urlEl = document.getElementById('previewUrl');
-  urlEl.href = finalUrl;
-  urlEl.textContent = truncate(finalUrl, 60);
+  urlEl.href = generation.final_url;
+  urlEl.textContent = truncate(generation.final_url, 60);
 
-  document.getElementById('downloadBtn').href = finalUrl;
-
+  document.getElementById('downloadBtn').href = generation.final_url;
   document.getElementById('previewSection').classList.remove('hidden');
 }
 
 function hidePreview() {
   document.getElementById('previewSection').classList.add('hidden');
+  document.getElementById('skeletonPanel').classList.remove('hidden');
 }
 
 function setLoading(on) {
@@ -277,14 +480,14 @@ function copyUrl(elId) {
 }
 
 function showToast(msg, type = 'success') {
-  const t = document.createElement('div');
-  t.className = `toast toast-${type}`;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
-// ── Utils ──────────────────────────────────────────────────────────────────────
+// ── Utils ─────────────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -297,10 +500,23 @@ function formatDate(iso) {
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
 // Cmd/Ctrl+Enter to generate
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
 });
 
+// Listen for accent color changes to update skeleton
+document.querySelectorAll('input[name="accentColor"]').forEach((el) => {
+  el.addEventListener('change', updateSkeletonColor);
+});
+
+// Init everything
 applyLang();
+skInit();
+['skLogo','skLine1','skPlashka','skPill','skFrame'].forEach((id) => {
+  const layer = document.getElementById(id)?.dataset.layer;
+  if (layer) makeDraggable(id, layer);
+});
+onFontChange('Oswald');
 loadHistory();

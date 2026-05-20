@@ -16,25 +16,39 @@ const ACCENT_MAP = {
 
 // Image sizes (px) — must match OpenAI output
 const IMG_W = 1024;
-const IMG_H = 1536;
 
-// Overlay coordinates (derived from Figma AL-17 frame 1080×1920, scaled 0.948× / 0.8×)
-const Y = {
-  logo:       55,   // logo top from north
-  line1:      220,  // line1 text top from north
-  plashka:    275,  // SVG plashka top from north (346.8 × 0.8 ≈ 277, rounded)
-  // line2 text centred on 100px plashka: 275 + 50 - 30 = 295
-  line2Text:  295,
-  // line3 text centred on pill (100 + 6 gap + 34 pill_half): 275 + 140 - 22 = 393
-  line3Text:  393,
+// Default overlay positions per image format
+// plashka / logo / line1 are Y from north; frameY is distance from south
+const POSITION_DEFAULTS = {
+  portrait: { logo: 55, line1: 220, plashka: 275, frameY: 80 },
+  square:   { logo: 40, line1: 150, plashka: 185, frameY: 60 },
 };
 
-// SVG plashka width (matches generate-plashka-svgs.js)
-const PLASHKA_SVG_W = 680;
+// SVG plashka dimensions (matches generate-plashka-svgs.js)
+const PLASHKA_W  = 680;
+const PLASHKA_H  = 100;
+const GAP        = 6;    // gap between plashka bottom and pill top
+const PILL_H     = 68;
 
-// Arabic Unicode → Cairo; Latin/digits → Oswald
-function pickFont(text) {
-  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text) ? 'Cairo' : 'Oswald';
+// Build the full Y lookup, deriving text positions from plashkaTop
+function buildY(imageSize, customY = {}) {
+  const d = POSITION_DEFAULTS[imageSize] || POSITION_DEFAULTS.portrait;
+  const plashkaTop = customY.plashka ?? d.plashka;
+  return {
+    logo:      customY.logo    ?? d.logo,
+    line1:     customY.line1   ?? d.line1,
+    plashka:   plashkaTop,
+    // text vertically centred inside plashka (PLASHKA_H=100, font≈58 → half=29)
+    line2Text: plashkaTop + Math.round(PLASHKA_H / 2) - 29,
+    // text centred in pill: plashka_bottom + gap + pill_half − font_half(44/2=22)
+    line3Text: plashkaTop + PLASHKA_H + GAP + Math.round(PILL_H / 2) - 22,
+    frameY:    customY.frameY  ?? d.frameY,
+  };
+}
+
+// Arabic Unicode range → Cairo; everything else → caller-supplied display font
+function pickFont(text, displayFont = 'Oswald') {
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text) ? 'Cairo' : displayFont;
 }
 
 function cldId(publicId) {
@@ -67,7 +81,7 @@ async function uploadAsset(filePath, publicId) {
     public_id:     publicId,
     resource_type: 'image',
     overwrite:     true,
-    invalidate:    true,  // purge CDN cache on overwrite
+    invalidate:    true,
   });
 }
 
@@ -78,32 +92,42 @@ function buildOverlayUrl(imagePublicId, params) {
     line1        = null,
     line2        = null,
     line3        = null,
+    fontFamily   = 'Oswald',
+    fontSize     = {},
+    imageSize    = 'portrait',
+    customY      = {},
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
   const { logoPublicId, framePublicIds, plashkaPublicIds } = CLOUDINARY_CONFIG;
 
+  const Y = buildY(imageSize, customY);
+
+  const fs1 = fontSize.line1 || 52;
+  const fs2 = fontSize.line2 || 58;
+  const fs3 = fontSize.line3 || 44;
+
   const t = [];
 
-  // ── LAYER 0 — App-store badge panel (south, 60% width, lifted) ───────────
+  // ── LAYER 0 — App-store badge panel (south) ──────────────────────────────────
   const frameId = framePublicIds?.[accentColor];
   if (frameId) {
     t.push({ overlay: cldId(frameId), width: 614 });
-    t.push({ flags: 'layer_apply', gravity: 'south', y: 80 });
+    t.push({ flags: 'layer_apply', gravity: 'south', y: Y.frameY });
   }
 
-  // ── LAYER 1 — Logo (top centre) ──────────────────────────────────────────
+  // ── LAYER 1 — Logo (top centre) ──────────────────────────────────────────────
   if (logoPublicId) {
     t.push({ overlay: cldId(logoPublicId), width: 240 });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.logo });
   }
 
-  // ── LAYER 2 — Line 1: plain white text ───────────────────────────────────
+  // ── LAYER 2 — Line 1: plain white text ───────────────────────────────────────
   if (line1?.trim()) {
     t.push({
       overlay: {
-        font_family: pickFont(line1),
-        font_size:   52,
+        font_family: pickFont(line1, fontFamily),
+        font_size:   fs1,
         font_weight: 'bold',
         text:        line1.trim(),
       },
@@ -114,39 +138,39 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line1 });
   }
 
-  // ── LAYER 3 — SVG plashka background ─────────────────────────────────────
+  // ── LAYER 3 — SVG plashka background ─────────────────────────────────────────
   if (line2?.trim()) {
     const type    = plashkaType(plashkaStyle, !!line3?.trim());
     const plashId = plashkaPublicIds?.[type]?.[accentColor];
 
     if (plashId) {
-      t.push({ overlay: cldId(plashId), width: PLASHKA_SVG_W });
+      t.push({ overlay: cldId(plashId), width: PLASHKA_W });
       t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.plashka });
     }
 
-    // ── LAYER 4 — Line 2 text on top of plashka ────────────────────────────
+    // ── LAYER 4 — Line 2 text on plashka ─────────────────────────────────────
     const line2Color = plashkaStyle === 'bordered' ? 'ffffff' : textHex;
     t.push({
       overlay: {
-        font_family: pickFont(line2),
-        font_size:   58,
+        font_family: pickFont(line2, fontFamily),
+        font_size:   fs2,
         font_weight: 'bold',
         text:        line2.trim(),
       },
       letter_spacing: 1,
       color: `rgb:${line2Color}`,
-      width: PLASHKA_SVG_W - 40,
+      width: PLASHKA_W - 40,
       crop:  'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line2Text });
   }
 
-  // ── LAYER 5 — Line 3 text on top of pill (only for style A) ─────────────
+  // ── LAYER 5 — Line 3 text on pill (style A only) ─────────────────────────────
   if (line3?.trim() && plashkaStyle !== 'bordered') {
     t.push({
       overlay: {
         font_family: 'Cairo',
-        font_size:   44,
+        font_size:   fs3,
         font_weight: 'bold',
         text:        line3.trim(),
       },

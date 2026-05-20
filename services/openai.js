@@ -1,4 +1,9 @@
-async function generateImage({ systemPrompt, userPrompt }) {
+const SIZE_MAP = {
+  portrait: '1024x1536',
+  square:   '1024x1024',
+};
+
+async function generateImage({ systemPrompt, userPrompt, imageSize = 'portrait' }) {
   const fullPrompt = `${systemPrompt}\n\nUser request: ${userPrompt}`;
 
   const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -8,12 +13,12 @@ async function generateImage({ systemPrompt, userPrompt }) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-image-2',
-      prompt: fullPrompt,
-      size: '1024x1536',
-      quality: 'medium',
+      model:         'gpt-image-2',
+      prompt:        fullPrompt,
+      size:          SIZE_MAP[imageSize] || SIZE_MAP.portrait,
+      quality:       'medium',
       output_format: 'jpeg',
-      n: 1,
+      n:             1,
     }),
   });
 

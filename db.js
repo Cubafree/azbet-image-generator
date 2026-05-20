@@ -29,7 +29,9 @@ async function initDb() {
       ADD COLUMN IF NOT EXISTS plashka_style TEXT,
       ADD COLUMN IF NOT EXISTS line1 TEXT,
       ADD COLUMN IF NOT EXISTS line2 TEXT,
-      ADD COLUMN IF NOT EXISTS line3 TEXT
+      ADD COLUMN IF NOT EXISTS line3 TEXT,
+      ADD COLUMN IF NOT EXISTS image_size TEXT DEFAULT 'portrait',
+      ADD COLUMN IF NOT EXISTS font_family TEXT DEFAULT 'Oswald'
   `);
   console.log('DB ready');
 }
