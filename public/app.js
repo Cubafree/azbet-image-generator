@@ -25,12 +25,12 @@ const I18N = {
     plashkaStyleLabel: 'Стиль плашки', filled: 'Залитая', bordered: 'Контурная',
     line3Toggle: 'Добавить доп. строку (пилл)', line3Label: 'Доп. строка',
     line3Hint: '≈ 10–15 латинских / ≈ 7–10 арабских символов',
-    fontLabel: 'Шрифт',
+    fontLabel: 'Шрифт', fontSizeLabel: 'Размер шрифта (px)',
     generateBtn: 'Генерировать', loadingText: 'Генерация… 20–40 секунд',
     resultTitle: 'Результат', confirmBtn: '✓ Подтвердить', regenBtn: '↻ Перегенерировать',
     downloadBtn: '↓ Скачать', backToLayout: '← Редактировать расположение',
     historyTitle: 'История генераций',
-    colVertical: 'Вертикаль', colCountry: 'Страна', colCharacter: 'Персонаж',
+    colVertical: 'Вертикаль', colCountry: 'Страна',
     colLine2: 'Строка 2', colStatus: 'Статус', colCreated: 'Создано',
     emptyHistory: 'Генераций пока нет',
     skTitle: 'Расположение слоёв', skReset: '↺ Сброс',
@@ -43,6 +43,8 @@ const I18N = {
     toastCopied: 'URL скопирован!',
     errorGenerate: 'Ошибка генерации',
     errorRegen: 'Ошибка перегенерации',
+    accTheme: 'Тематика', accVisual: 'Визуал', accText: 'Текст', accFont: 'Типографика',
+    customLayout: 'custom layout',
   },
   en: {
     badge: 'Internal tool',
@@ -67,12 +69,12 @@ const I18N = {
     plashkaStyleLabel: 'Badge style', filled: 'Filled', bordered: 'Bordered',
     line3Toggle: 'Add extra line (pill)', line3Label: 'Extra line',
     line3Hint: '≈ 10–15 Latin / ≈ 7–10 Arabic chars',
-    fontLabel: 'Font',
+    fontLabel: 'Font', fontSizeLabel: 'Font size (px)',
     generateBtn: 'Generate', loadingText: 'Generating… 20–40 sec',
     resultTitle: 'Result', confirmBtn: '✓ Confirm', regenBtn: '↻ Regenerate',
     downloadBtn: '↓ Download', backToLayout: '← Edit layout',
     historyTitle: 'Generation history',
-    colVertical: 'Vertical', colCountry: 'Country', colCharacter: 'Character',
+    colVertical: 'Vertical', colCountry: 'Country',
     colLine2: 'Line 2', colStatus: 'Status', colCreated: 'Created',
     emptyHistory: 'No generations yet',
     skTitle: 'Layer positions', skReset: '↺ Reset',
@@ -85,6 +87,8 @@ const I18N = {
     toastCopied: 'URL copied!',
     errorGenerate: 'Generation error',
     errorRegen: 'Regeneration error',
+    accTheme: 'Theme', accVisual: 'Visual', accText: 'Text', accFont: 'Typography',
+    customLayout: 'custom layout',
   },
 };
 
@@ -102,6 +106,11 @@ function applyLang() {
     if (I18N[lang][key] !== undefined) el.placeholder = I18N[lang][key];
   });
   document.getElementById('langToggle').textContent = lang === 'ru' ? 'EN' : 'RU';
+  // Refresh summaries after language change
+  onThemeChange();
+  onVisualChange();
+  onFontSummaryChange();
+  updateSkeletonText();
 }
 
 function toggleLang() {
@@ -110,15 +119,112 @@ function toggleLang() {
   applyLang();
 }
 
-// ── Font ──────────────────────────────────────────────────────────────────────
-const GOOGLE_FONTS = [
-  'Oswald','Bebas Neue','Anton','Barlow Condensed','Teko',
-  'Montserrat','Raleway','Roboto','Poppins','Inter','Exo 2','Orbitron',
-];
+// ── Accordion ─────────────────────────────────────────────────────────────────
+function toggleAcc(id) {
+  const item = document.getElementById(id);
+  if (!item || item.classList.contains('is-fixed')) return;
+  item.classList.toggle('is-open');
+}
 
+// ── Accordion summaries ───────────────────────────────────────────────────────
+function onThemeChange() {
+  updateSportTypeVisibility();
+
+  const vertical = getRadioValue('vertical');
+  const country  = getRadioValue('country');
+  const subject  = getRadioValue('subject');
+  const sport    = getRadioValue('sportType');
+
+  const parts = [
+    vertical ? capFirst(vertical) : null,
+    country  ? capFirst(country)  : null,
+    subject  ? capFirst(subject)  : null,
+    (vertical === 'sport' && subject !== 'object' && sport) ? capFirst(sport) : null,
+  ].filter(Boolean);
+
+  const el = document.getElementById('sumTheme');
+  if (el) el.textContent = parts.join(' · ');
+}
+
+function onVisualChange() {
+  updateSkeletonColor();
+
+  const color = getRadioValue('accentColor') || 'cyan';
+  const size  = getRadioValue('imageSize')   || 'portrait';
+  const style = getRadioValue('plashkaStyle');
+
+  const colorNames = { cyan: 'Cyan', green: 'Green', purple: 'Purple', gold: 'Gold' };
+  const sizeNames  = { portrait: '9:16', square: '1:1' };
+
+  const parts = [
+    colorNames[color] || capFirst(color),
+    sizeNames[size]   || size,
+    style ? capFirst(style) : null,
+  ].filter(Boolean);
+
+  const el = document.getElementById('sumVisual');
+  if (el) el.textContent = parts.join(' · ');
+}
+
+function onFontSummaryChange() {
+  const family = document.getElementById('fontFamily')?.value || 'Oswald';
+  const s1     = document.getElementById('size1')?.value     || '52';
+  const s2     = document.getElementById('size2')?.value     || '58';
+  const s3     = document.getElementById('size3')?.value     || '44';
+
+  const el = document.getElementById('sumFont');
+  if (el) el.textContent = `${family} · ${s1}/${s2}/${s3}`;
+}
+
+// ── Char counters ─────────────────────────────────────────────────────────────
+function updateCharCount(inputId, countId, max) {
+  const input   = document.getElementById(inputId);
+  const counter = document.getElementById(countId);
+  if (!input || !counter) return;
+
+  const len   = input.value.length;
+  counter.textContent = len;
+
+  const ratio = max ? len / max : 0;
+  if (ratio >= 1)   counter.style.color = 'var(--danger)';
+  else if (ratio >= 0.8) counter.style.color = 'var(--warning)';
+  else              counter.style.color = 'var(--text-muted)';
+}
+
+// ── Skeleton text labels ──────────────────────────────────────────────────────
+function updateSkeletonText() {
+  const line1 = document.getElementById('line1Input')?.value.trim() || '';
+  const line2 = document.getElementById('line2Input')?.value.trim() || '';
+  const line3 = document.getElementById('line3')?.value.trim()      || '';
+
+  const skLine1Span   = document.querySelector('#skLine1 span');
+  const skPlashkaSpan = document.querySelector('#skPlashka span');
+  const skPillSpan    = document.querySelector('#skPill span');
+
+  if (skLine1Span)   skLine1Span.textContent   = line1 ? truncate(line1, 22) : t('skLine1');
+  if (skPlashkaSpan) skPlashkaSpan.textContent = line2 ? truncate(line2, 16) : t('skLine2');
+  if (skPillSpan)    skPillSpan.textContent    = line3 ? truncate(line3, 13) : t('skLine3');
+}
+
+// ── Font preview ──────────────────────────────────────────────────────────────
+function updateFontPreview() {
+  const line2   = document.getElementById('line2Input')?.value.trim();
+  const preview = document.getElementById('fontPreview');
+  if (preview) preview.textContent = line2 || 'AaBb 100% BONUS 78K';
+}
+
+// ── Custom position badge ─────────────────────────────────────────────────────
+function updateCustomBadge() {
+  const badge = document.getElementById('customPosBadge');
+  if (!badge) return;
+  badge.classList.toggle('hidden', Object.keys(skPositions).length === 0);
+}
+
+// ── Font ──────────────────────────────────────────────────────────────────────
 function onFontChange(value) {
-  // All fonts already loaded upfront — just update the preview element
-  document.getElementById('fontPreview').style.fontFamily = `'${value}', sans-serif`;
+  const preview = document.getElementById('fontPreview');
+  if (preview) preview.style.fontFamily = `'${value}', sans-serif`;
+  onFontSummaryChange();
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
@@ -132,7 +238,7 @@ const SK_DEFAULTS = {
   square:   { logo: 40, line1: 150, plashka: 185, frameY: 60 },
 };
 
-// Element heights in canvas px (derived from image space with SK_SCALE)
+// Element heights in canvas px
 const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34 };
 
 let skPositions = {};  // overridden positions in IMAGE space
@@ -168,6 +274,11 @@ function skInit() {
   skPlace('skFrame', frameCanvasTop);
 
   updateSkeletonColor();
+  updateCustomBadge();
+
+  // Dimensions label
+  const dimsEl = document.getElementById('skDimensions');
+  if (dimsEl) dimsEl.textContent = size === 'square' ? '1024 × 1024' : '1024 × 1536';
 }
 
 function skPlace(id, canvasY) {
@@ -183,9 +294,9 @@ function updateSkeletonColor() {
   const pill    = document.getElementById('skPill');
 
   if (plashka) {
-    plashka.style.background   = base + '0.35)';
-    plashka.style.borderColor  = base + '0.7)';
-    plashka.style.color        = base + '0.95)';
+    plashka.style.background  = base + '0.35)';
+    plashka.style.borderColor = base + '0.7)';
+    plashka.style.color       = base + '0.95)';
   }
   if (pill) {
     pill.style.borderColor = base + '0.7)';
@@ -212,14 +323,13 @@ function makeDraggable(elId, layer) {
 
     el.classList.add('is-dragging');
 
-    // Tooltip
     const tip = document.createElement('div');
     tip.className = 'sk-tooltip';
     el.appendChild(tip);
 
     function onMove(e) {
-      const curY  = e.touches ? e.touches[0].clientY : e.clientY;
-      const dy    = curY - startClientY;
+      const curY   = e.touches ? e.touches[0].clientY : e.clientY;
+      const dy     = curY - startClientY;
       const canvas = document.getElementById('skCanvas');
       const maxTop = canvas.offsetHeight - el.offsetHeight;
       const newTop = Math.max(0, Math.min(maxTop, startTop + dy));
@@ -230,7 +340,6 @@ function makeDraggable(elId, layer) {
       const canvasH = SK_CANVAS_H[size];
 
       if (layer === 'frame') {
-        // distance from bottom: (canvasH - top - elemH) / SK_SCALE
         const fromBottom = Math.round((canvasH - newTop - SK_H.frame) / SK_SCALE);
         skPositions.frameY = Math.max(0, fromBottom);
         tip.textContent = `↑ ${skPositions.frameY}px`;
@@ -250,6 +359,7 @@ function makeDraggable(elId, layer) {
     function onUp() {
       el.classList.remove('is-dragging');
       tip.remove();
+      updateCustomBadge(); // show badge when custom position set
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
@@ -264,7 +374,7 @@ function makeDraggable(elId, layer) {
 }
 
 function resetPositions() {
-  skInit();
+  skInit(); // also calls updateCustomBadge() inside
 }
 
 function skCollectCustomY() {
@@ -282,7 +392,7 @@ function skCollectCustomY() {
 
 function backToSkeleton() {
   hidePreview();
-  currentGenerationId = null; // clear stale ref — new generate() will set a fresh ID
+  currentGenerationId = null;
 }
 
 // ── Sport Type visibility ─────────────────────────────────────────────────────
@@ -290,18 +400,18 @@ function updateSportTypeVisibility() {
   const vertical = getRadioValue('vertical');
   const subject  = getRadioValue('subject');
   const row      = document.getElementById('sportTypeRow');
-  row.classList.toggle('hidden', !(vertical === 'sport' && subject !== 'object'));
+  if (row) row.classList.toggle('hidden', !(vertical === 'sport' && subject !== 'object'));
 }
-
-document.querySelectorAll('input[name="vertical"], input[name="subject"]').forEach((el) => {
-  el.addEventListener('change', updateSportTypeVisibility);
-});
-updateSportTypeVisibility();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getRadioValue(name) {
   const el = document.querySelector(`input[name="${name}"]:checked`);
   return el ? el.value : null;
+}
+
+function setRadio(name, value) {
+  const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
 }
 
 // ── Line3 toggle ──────────────────────────────────────────────────────────────
@@ -310,28 +420,79 @@ function toggleLine3() {
   document.getElementById('line3Row').classList.toggle('hidden', !show);
   document.getElementById('skPill').classList.toggle('hidden', !show);
   if (!show) {
-    document.getElementById('line3').value  = '';
-    document.getElementById('size3').value  = '44'; // reset to default
+    document.getElementById('line3').value = '';
+    document.getElementById('size3').value = '44';
+    updateCharCount('line3', 'cnt3', 14);
+    updateSkeletonText();
   }
+}
+
+// ── Load from history row ─────────────────────────────────────────────────────
+function loadFromHistory(g) {
+  // Radios
+  if (g.vertical)     setRadio('vertical',     g.vertical);
+  if (g.country)      setRadio('country',      g.country);
+  if (g.subject)      setRadio('subject',      g.subject);
+  if (g.sport_type)   setRadio('sportType',    g.sport_type);
+  if (g.accent_color) setRadio('accentColor',  g.accent_color);
+  if (g.image_size)   setRadio('imageSize',    g.image_size);
+  if (g.plashka_style) setRadio('plashkaStyle', g.plashka_style);
+
+  // Text fields
+  const line2val = g.line2 || g.banner_text || '';
+  document.getElementById('scenePrompt').value = g.scene_prompt || '';
+  document.getElementById('line1Input').value  = g.line1 || '';
+  document.getElementById('line2Input').value  = line2val;
+
+  // Line3
+  const hasLine3 = !!g.line3;
+  document.getElementById('line3Toggle').checked = hasLine3;
+  document.getElementById('line3Row').classList.toggle('hidden', !hasLine3);
+  document.getElementById('skPill').classList.toggle('hidden', !hasLine3);
+  document.getElementById('line3').value = g.line3 || '';
+
+  // Font
+  if (g.font_family) {
+    document.getElementById('fontFamily').value = g.font_family;
+    onFontChange(g.font_family);
+  }
+
+  // Update all derived UI
+  updateSportTypeVisibility();
+  onThemeChange();
+  onVisualChange();
+  onFontSummaryChange();
+  skInit();
+
+  updateCharCount('line1Input', 'cnt1', 28);
+  updateCharCount('line2Input', 'cnt2', 18);
+  updateCharCount('line3',      'cnt3', 14);
+  updateSkeletonText();
+  updateFontPreview();
+
+  // Scroll left panel to top
+  document.querySelector('.panel-left')?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  showToast(lang === 'ru' ? 'Параметры загружены из истории' : 'Parameters loaded from history', 'success');
 }
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 async function generate() {
-  const vertical    = getRadioValue('vertical');
-  const country     = getRadioValue('country');
-  const subject     = getRadioValue('subject');
-  const sportType   = getRadioValue('sportType');
-  const accentColor = getRadioValue('accentColor');
-  const imageSize   = getRadioValue('imageSize') || 'portrait';
-  const scenePrompt = document.getElementById('scenePrompt').value.trim();
-  const line1       = document.getElementById('line1Input').value.trim();
-  const line2       = document.getElementById('line2Input').value.trim();
+  const vertical     = getRadioValue('vertical');
+  const country      = getRadioValue('country');
+  const subject      = getRadioValue('subject');
+  const sportType    = getRadioValue('sportType');
+  const accentColor  = getRadioValue('accentColor');
+  const imageSize    = getRadioValue('imageSize') || 'portrait';
+  const scenePrompt  = document.getElementById('scenePrompt').value.trim();
+  const line1        = document.getElementById('line1Input').value.trim();
+  const line2        = document.getElementById('line2Input').value.trim();
   const plashkaStyle = getRadioValue('plashkaStyle');
-  const line3Raw    = document.getElementById('line3Toggle').checked
+  const line3Raw     = document.getElementById('line3Toggle').checked
     ? document.getElementById('line3').value.trim()
     : null;
-  const fontFamily  = document.getElementById('fontFamily').value || 'Oswald';
-  const fontSize    = {
+  const fontFamily   = document.getElementById('fontFamily').value || 'Oswald';
+  const fontSize     = {
     line1: parseInt(document.getElementById('size1').value) || 52,
     line2: parseInt(document.getElementById('size2').value) || 58,
     line3: parseInt(document.getElementById('size3').value) || 44,
@@ -425,21 +586,31 @@ async function loadHistory() {
 function renderTable(rows) {
   const tbody = document.getElementById('historyBody');
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty">${t('emptyHistory')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">${t('emptyHistory')}</td></tr>`;
     return;
   }
-  tbody.innerHTML = rows.map((g) => `
-    <tr>
+
+  tbody.innerHTML = rows.map((g, i) => `
+    <tr class="hist-row" data-idx="${i}">
+      <td class="hist-thumb-cell">
+        ${g.final_url
+          ? `<img class="hist-thumb" src="${escHtml(g.final_url)}" alt="" loading="lazy" />`
+          : '<span style="opacity:.3">—</span>'}
+      </td>
       <td>${g.id}</td>
       <td>${g.vertical ? capFirst(g.vertical) : '—'}</td>
       <td>${g.country  ? capFirst(g.country)  : '—'}</td>
-      <td>${g.subject  ? capFirst(g.subject)  : '—'}</td>
-      <td title="${escHtml(g.line2 || g.banner_text)}">${escHtml(truncate(g.line2 || g.banner_text || '', 30))}</td>
+      <td title="${escHtml(g.line2 || g.banner_text)}">${escHtml(truncate(g.line2 || g.banner_text || '', 25))}</td>
       <td><span class="status-badge status-${g.status}">${g.status}</span></td>
-      <td>${g.final_url ? `<a class="table-url" href="${escHtml(g.final_url)}" target="_blank">Open ↗</a>` : '—'}</td>
       <td>${formatDate(g.created_at)}</td>
     </tr>
   `).join('');
+
+  // Attach click handlers via JS (not inline onclick) for clean data passing
+  tbody.querySelectorAll('.hist-row').forEach((tr) => {
+    const idx = parseInt(tr.dataset.idx);
+    tr.addEventListener('click', () => loadFromHistory(rows[idx]));
+  });
 }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
@@ -448,7 +619,7 @@ function showPreview(generation) {
   document.getElementById('previewImg').src = generation.final_url;
 
   const urlEl = document.getElementById('previewUrl');
-  urlEl.href = generation.final_url;
+  urlEl.href        = generation.final_url;
   urlEl.textContent = truncate(generation.final_url, 60);
 
   document.getElementById('downloadBtn').href = generation.final_url;
@@ -463,7 +634,6 @@ function hidePreview() {
 function setLoading(on) {
   document.getElementById('loading').classList.toggle('hidden', !on);
   document.getElementById('generateBtn').disabled = on;
-  // Disable skeleton dragging while a request is in flight
   const canvas = document.getElementById('skCanvas');
   if (canvas) {
     canvas.style.pointerEvents = on ? 'none' : '';
@@ -473,8 +643,9 @@ function setLoading(on) {
 }
 
 function showError(msg) {
-  const el = document.getElementById('error');
-  el.textContent = `Error: ${msg}`;
+  const el    = document.getElementById('error');
+  const msgEl = document.getElementById('errorMsg');
+  if (msgEl) msgEl.textContent = `Error: ${msg}`;
   el.classList.remove('hidden');
 }
 
@@ -489,7 +660,7 @@ function copyUrl(elId) {
 
 function showToast(msg, type = 'success') {
   const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
+  toast.className   = `toast toast-${type}`;
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
@@ -514,17 +685,18 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
 });
 
-// Listen for accent color changes to update skeleton
-document.querySelectorAll('input[name="accentColor"]').forEach((el) => {
-  el.addEventListener('change', updateSkeletonColor);
-});
-
 // Init everything
 applyLang();
+updateSportTypeVisibility();
 skInit();
+
 ['skLogo','skLine1','skPlashka','skPill','skFrame'].forEach((id) => {
   const layer = document.getElementById(id)?.dataset.layer;
   if (layer) makeDraggable(id, layer);
 });
+
 onFontChange('Oswald');
+onThemeChange();
+onVisualChange();
+onFontSummaryChange();
 loadHistory();
