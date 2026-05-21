@@ -562,14 +562,21 @@ td:nth-child(2), td:nth-child(3) {
 /* ── Font selector & preview ────────────────────────────────────────────────── */
 .font-select { cursor: pointer; }
 .font-preview {
-  font-size: 18px;
+  font-size: 22px;         /* fallback; overridden by JS scaled value */
   font-weight: 700;
   color: var(--text);
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--surface2);
   border-radius: 8px;
   letter-spacing: 0.5px;
   margin-top: -4px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  transition: font-size .15s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* ── Secondary button ────────────────────────────────────────────────────────── */

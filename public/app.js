@@ -174,6 +174,9 @@ function onFontSummaryChange() {
 
   const el = document.getElementById('sumFont');
   if (el) el.textContent = `${family} · ${s1}/${s2}/${s3}`;
+
+  // Reflect size change in font preview
+  updateFontPreview();
 }
 
 // ── Char counters ─────────────────────────────────────────────────────────────
@@ -207,10 +210,20 @@ function updateSkeletonText() {
 }
 
 // ── Font preview ──────────────────────────────────────────────────────────────
+// Scale factor: preview box (~400px) / banner width (1024px)
+const PREVIEW_SCALE = 400 / 1024;
+
 function updateFontPreview() {
   const line2   = document.getElementById('line2Input')?.value.trim();
+  const size2   = parseInt(document.getElementById('size2')?.value) || 58;
   const preview = document.getElementById('fontPreview');
-  if (preview) preview.textContent = line2 || 'AaBb 100% BONUS 78K';
+  if (!preview) return;
+
+  preview.textContent = line2 || 'AaBb 100% BONUS 78K';
+
+  // Scaled size gives realistic sense of proportion on the final banner
+  const scaledPx = Math.max(10, Math.round(size2 * PREVIEW_SCALE));
+  preview.style.fontSize = scaledPx + 'px';
 }
 
 // ── Custom position badge ─────────────────────────────────────────────────────
