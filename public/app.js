@@ -45,6 +45,7 @@ const I18N = {
     errorRegen: 'Ошибка перегенерации',
     accTheme: 'Тематика', accVisual: 'Визуал', accText: 'Текст', accFont: 'Типографика',
     customLayout: 'custom layout',
+    addVariant: '➕ Сгенерировать с другим промокодом',
   },
   en: {
     badge: 'Internal tool',
@@ -89,6 +90,7 @@ const I18N = {
     errorRegen: 'Regeneration error',
     accTheme: 'Theme', accVisual: 'Visual', accText: 'Text', accFont: 'Typography',
     customLayout: 'custom layout',
+    addVariant: '➕ Generate with another promo',
   },
 };
 
@@ -427,6 +429,117 @@ function setRadio(name, value) {
   if (el) el.checked = true;
 }
 
+// ── Multi-variant blocks ──────────────────────────────────────────────────────
+function addVariantBlock(triggerN) {
+  const newBlockN = triggerN + 1;
+  const textNum   = newBlockN + 1; // "ТЕКСТ 2", "ТЕКСТ 3" ...
+  const cb        = document.getElementById(`variantCb${triggerN}`);
+
+  if (cb && cb.checked) {
+    const container = document.getElementById('extraVariants');
+    const el = document.createElement('div');
+    el.id        = `vblock${newBlockN}`;
+    el.className = 'variant-block';
+    el.innerHTML = `
+      <div class="variant-hdr">
+        <span class="variant-num">ТЕКСТ ${textNum}</span>
+        <button class="variant-remove" type="button" onclick="removeVariantsFrom(${newBlockN})">✕</button>
+      </div>
+      <label class="field-label line-label-row">
+        <span>Строка 1</span>
+        <span class="optional">необязательно</span>
+        <span class="char-count" id="vcnt1_${newBlockN}">0</span>
+      </label>
+      <input type="text" class="input-field" id="vline1_${newBlockN}"
+        placeholder="BONUS DE DÉPÔT"
+        oninput="updateCharCount('vline1_${newBlockN}','vcnt1_${newBlockN}',28)" />
+      <label class="field-label line-label-row">
+        <span>Строка 2</span>
+        <span class="required">на плашке, обязательно</span>
+        <span class="char-count" id="vcnt2_${newBlockN}">0</span>
+      </label>
+      <input type="text" class="input-field" id="vline2_${newBlockN}"
+        placeholder="100% + 30 TOURS"
+        oninput="updateCharCount('vline2_${newBlockN}','vcnt2_${newBlockN}',18)" />
+      <label class="toggle-label">
+        <input type="checkbox" id="vl3toggle_${newBlockN}"
+          onchange="toggleVariantLine3(${newBlockN})" />
+        <span>Добавить доп. строку (пилл)</span>
+      </label>
+      <div id="vl3row_${newBlockN}" class="hidden">
+        <label class="field-label line-label-row" style="margin-top:4px">
+          <span>Доп. строка</span>
+          <span class="char-count" id="vcnt3_${newBlockN}">0</span>
+        </label>
+        <input type="text" class="input-field" id="vline3_${newBlockN}"
+          placeholder="78K + 150FS"
+          oninput="updateCharCount('vline3_${newBlockN}','vcnt3_${newBlockN}',14)" />
+      </div>
+      <label class="toggle-label variant-trigger">
+        <input type="checkbox" id="variantCb${newBlockN}"
+          onchange="addVariantBlock(${newBlockN})" />
+        <span>➕ Сгенерировать с другим промокодом</span>
+      </label>
+    `;
+    container.appendChild(el);
+  } else {
+    // Cascade-remove this block and all subsequent
+    removeVariantsFrom(newBlockN);
+  }
+}
+
+function removeVariantsFrom(startN) {
+  for (let i = startN; ; i++) {
+    const el = document.getElementById(`vblock${i}`);
+    if (!el) break;
+    el.remove();
+  }
+  // Uncheck the trigger that spawned startN
+  const triggerCb = document.getElementById(`variantCb${startN - 1}`);
+  if (triggerCb) triggerCb.checked = false;
+}
+
+function toggleVariantLine3(blockN) {
+  const show = document.getElementById(`vl3toggle_${blockN}`)?.checked;
+  const row  = document.getElementById(`vl3row_${blockN}`);
+  if (row) row.classList.toggle('hidden', !show);
+  if (!show) {
+    const inp = document.getElementById(`vline3_${blockN}`);
+    if (inp) inp.value = '';
+    const cnt = document.getElementById(`vcnt3_${blockN}`);
+    if (cnt) cnt.textContent = '0';
+  }
+}
+
+function collectAllVariants() {
+  const variants = [];
+
+  // Main block
+  variants.push({
+    line1: document.getElementById('line1Input')?.value.trim() || null,
+    line2: document.getElementById('line2Input')?.value.trim() || '',
+    line3: document.getElementById('line3Toggle')?.checked
+      ? (document.getElementById('line3')?.value.trim() || null)
+      : null,
+  });
+
+  // Extra blocks
+  for (let i = 1; ; i++) {
+    if (!document.getElementById(`vblock${i}`)) break;
+    const line2 = document.getElementById(`vline2_${i}`)?.value.trim() || '';
+    if (!line2) continue; // skip empty extra blocks
+    variants.push({
+      line1: document.getElementById(`vline1_${i}`)?.value.trim() || null,
+      line2,
+      line3: document.getElementById(`vl3toggle_${i}`)?.checked
+        ? (document.getElementById(`vline3_${i}`)?.value.trim() || null)
+        : null,
+    });
+  }
+
+  return variants;
+}
+
 // ── Line3 toggle ──────────────────────────────────────────────────────────────
 function toggleLine3() {
   const show = document.getElementById('line3Toggle').checked;
@@ -498,21 +611,17 @@ async function generate() {
   const accentColor  = getRadioValue('accentColor');
   const imageSize    = getRadioValue('imageSize') || 'portrait';
   const scenePrompt  = document.getElementById('scenePrompt').value.trim();
-  const line1        = document.getElementById('line1Input').value.trim();
-  const line2        = document.getElementById('line2Input').value.trim();
   const plashkaStyle = getRadioValue('plashkaStyle');
-  const line3Raw     = document.getElementById('line3Toggle').checked
-    ? document.getElementById('line3').value.trim()
-    : null;
   const fontFamily   = document.getElementById('fontFamily').value || 'Oswald';
   const fontSize     = {
     line1: parseInt(document.getElementById('size1').value) || 52,
     line2: parseInt(document.getElementById('size2').value) || 58,
     line3: parseInt(document.getElementById('size3').value) || 44,
   };
-  const customY = skCollectCustomY();
+  const customY  = skCollectCustomY();
+  const variants = collectAllVariants();
 
-  if (!line2) {
+  if (!variants[0]?.line2) {
     showToast(t('toastLine2Required'), 'error');
     return;
   }
@@ -524,12 +633,9 @@ async function generate() {
   try {
     const body = {
       vertical, country, subject, sportType, accentColor,
-      scenePrompt, imageSize, fontFamily, fontSize,
-      line1: line1 || null,
-      line2,
-      plashkaStyle,
-      ...(line3Raw ? { line3: line3Raw } : {}),
-      ...(customY  ? { customY }         : {}),
+      scenePrompt, imageSize, fontFamily, fontSize, plashkaStyle,
+      variants,
+      ...(customY ? { customY } : {}),
     };
 
     const res  = await fetch('/api/generate', {
@@ -541,8 +647,15 @@ async function generate() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || t('errorGenerate'));
 
-    currentGenerationId = data.generation.id;
-    showPreview(data.generation);
+    // Backend always returns { generations: [...] }
+    const gens = data.generations || (data.generation ? [data.generation] : []);
+    currentGenerationId = gens[0]?.id || null;
+
+    if (gens.length === 1) {
+      showPreview(gens[0]);
+    } else {
+      showVariantResults(gens);
+    }
     loadHistory();
     showToast(t('toastGenerated'), 'success');
   } catch (err) {
@@ -614,12 +727,11 @@ function renderTable(rows) {
       <td>${g.vertical ? capFirst(g.vertical) : '—'}</td>
       <td>${g.country  ? capFirst(g.country)  : '—'}</td>
       <td title="${escHtml(g.line2 || g.banner_text)}">${escHtml(truncate(g.line2 || g.banner_text || '', 25))}</td>
-      <td><span class="status-badge status-${g.status}">${g.status}</span></td>
+      <td>${g.final_url ? `<a class="table-url" href="${escHtml(g.final_url)}" target="_blank" onclick="event.stopPropagation()">URL ↗</a>` : '—'}</td>
       <td>${formatDate(g.created_at)}</td>
     </tr>
   `).join('');
 
-  // Attach click handlers via JS (not inline onclick) for clean data passing
   tbody.querySelectorAll('.hist-row').forEach((tr) => {
     const idx = parseInt(tr.dataset.idx);
     tr.addEventListener('click', () => loadFromHistory(rows[idx]));
@@ -641,7 +753,62 @@ function showPreview(generation) {
 
 function hidePreview() {
   document.getElementById('previewSection').classList.add('hidden');
+  document.getElementById('variantsSection').classList.add('hidden');
   document.getElementById('skeletonPanel').classList.remove('hidden');
+}
+
+// ── Multi-variant results ─────────────────────────────────────────────────────
+function showVariantResults(generations) {
+  document.getElementById('skeletonPanel').classList.add('hidden');
+  document.getElementById('previewSection').classList.add('hidden');
+
+  const sec = document.getElementById('variantsSection');
+  sec.innerHTML = `
+    <div class="variants-hdr">
+      <span class="preview-section-title">
+        ${lang === 'ru' ? 'Результат' : 'Result'} · ${generations.length} ${lang === 'ru' ? 'варианта' : 'variants'}
+      </span>
+      <button class="btn-reset-pos" onclick="backToSkeleton()">← ${lang === 'ru' ? 'Назад' : 'Back'}</button>
+    </div>
+    <div class="variants-list">
+      ${generations.map((g, i) => `
+        <div class="variant-result-card" id="vrc_${g.id}">
+          <a class="vrc-thumb" href="${escHtml(g.final_url)}" target="_blank">
+            <img src="${escHtml(g.final_url)}" alt="Вариант ${i + 1}" />
+          </a>
+          <div class="vrc-body">
+            <span class="vrc-label">${lang === 'ru' ? 'Текст' : 'Text'} ${i + 1}</span>
+            <span class="vrc-line2">${escHtml(g.line2 || g.banner_text || '')}</span>
+            <div class="vrc-actions">
+              <button class="btn btn-confirm vrc-btn" id="vrc_confirm_${g.id}"
+                onclick="confirmGenById(${g.id})">✓ ${lang === 'ru' ? 'Подтвердить' : 'Confirm'}</button>
+              <a href="${escHtml(g.final_url)}" download="banner_v${i + 1}.jpg"
+                class="btn btn-download vrc-btn">↓</a>
+              <a href="${escHtml(g.final_url)}" target="_blank" class="table-url vrc-url">URL ↗</a>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-secondary" onclick="backToSkeleton()" style="margin-top:12px">
+      ← ${lang === 'ru' ? 'Редактировать расположение' : 'Edit layout'}
+    </button>
+  `;
+  sec.classList.remove('hidden');
+}
+
+async function confirmGenById(id) {
+  try {
+    const res  = await fetch(`/api/generate/${id}/confirm`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    loadHistory();
+    showToast(t('toastConfirmed'), 'success');
+    const btn = document.getElementById(`vrc_confirm_${id}`);
+    if (btn) { btn.textContent = '✓'; btn.disabled = true; btn.style.opacity = '.5'; }
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 function setLoading(on) {

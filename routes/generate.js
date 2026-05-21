@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const { pool } = require('../db');
 const { generateImage } = require('../services/openai');
 const { uploadImage, buildOverlayUrl } = require('../services/cloudinary');
@@ -16,7 +16,7 @@ const VALID = {
 };
 
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, line2, plashkaStyle, imageSize } = body;
+  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2 } = body;
   if (!VALID.vertical.includes(vertical))       return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country))         return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject))         return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -25,7 +25,11 @@ function validate(body) {
   if (vertical === 'sport' && subject !== 'object' && !VALID.sportType.includes(sportType)) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
   }
-  if (!line2?.trim()) return 'line2 is required';
+  // Accept either variants array or legacy line2
+  const hasLine2 = (variants && variants.length > 0)
+    ? variants.some(v => v.line2?.trim())
+    : !!line2?.trim();
+  if (!hasLine2) return 'line2 is required';
   if (!['filled', 'bordered'].includes(plashkaStyle)) return 'plashkaStyle must be filled or bordered';
   return null;
 }
@@ -40,14 +44,25 @@ router.post('/', async (req, res) => {
 
   const {
     vertical, country, subject, sportType, accentColor,
-    scenePrompt, line1, line2, plashkaStyle, line3,
+    scenePrompt, plashkaStyle,
     imageSize  = 'portrait',
     fontFamily = 'Oswald',
     fontSize   = {},
     customY    = {},
+    variants   = null,
+    // legacy single-variant fields (fallback)
+    line1, line2, line3,
   } = req.body;
 
-  log('GENERATE request', { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily, line1, line2, line3: line3 || null });
+  // Build text variants list
+  const textVariants = (variants && variants.length > 0)
+    ? variants.filter(v => v.line2?.trim())
+    : [{ line1: line1?.trim() || null, line2: line2?.trim() || '', line3: line3?.trim() || null }];
+
+  log('GENERATE request', {
+    vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily,
+    variantCount: textVariants.length,
+  });
 
   try {
     const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt });
@@ -60,42 +75,51 @@ router.post('/', async (req, res) => {
     const publicId = uploadResult.public_id;
     log('IMAGE uploaded', { publicId });
 
-    const overlayParams = {
-      accentColor,
-      plashkaStyle,
-      line1: line1?.trim() || null,
-      line2: line2.trim(),
-      line3: line3?.trim() || null,
-      fontFamily,
-      fontSize,
-      imageSize,
-      customY,
-    };
-    const finalUrl = buildOverlayUrl(publicId, overlayParams);
-    log('OVERLAY URL built', { finalUrl });
+    const generations = [];
 
-    const { rows } = await pool.query(
-      `INSERT INTO generations
-         (prompt, banner_text, cloudinary_public_id, final_url, status,
-          vertical, country, subject, sport_type, accent_color, scene_prompt,
-          plashka_style, line1, line2, line3, image_size, font_family)
-       VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-      [
-        userPrompt, line2.trim(), publicId, finalUrl,
-        vertical, country, subject,
-        vertical === 'sport' ? (sportType || null) : null,
-        accentColor, scenePrompt?.trim() || null,
-        plashkaStyle, line1?.trim() || null, line2.trim(), line3?.trim() || null,
-        imageSize, fontFamily,
-      ]
-    );
-    const generation = rows[0];
-    log('DB saved', { id: generation.id });
+    for (const v of textVariants) {
+      const overlayParams = {
+        accentColor,
+        plashkaStyle,
+        line1:      v.line1?.trim() || null,
+        line2:      v.line2.trim(),
+        line3:      v.line3?.trim() || null,
+        fontFamily,
+        fontSize,
+        imageSize,
+        customY,
+      };
+      const finalUrl = buildOverlayUrl(publicId, overlayParams);
+      log('OVERLAY URL built', { line2: v.line2.trim(), finalUrl });
 
-    const tgCaption = `🎨 <b>New banner</b>\n${vertical} · ${country} · ${subject}${sportType ? ` · ${sportType}` : ''} · ${imageSize}\nLine2: ${line2.trim()}`;
-    sendPhotoUrl(finalUrl, tgCaption).catch((err) => console.error('[TG] send failed:', err.message));
+      const { rows } = await pool.query(
+        `INSERT INTO generations
+           (prompt, banner_text, cloudinary_public_id, final_url, status,
+            vertical, country, subject, sport_type, accent_color, scene_prompt,
+            plashka_style, line1, line2, line3, image_size, font_family)
+         VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+        [
+          userPrompt, v.line2.trim(), publicId, finalUrl,
+          vertical, country, subject,
+          vertical === 'sport' ? (sportType || null) : null,
+          accentColor, scenePrompt?.trim() || null,
+          plashkaStyle, v.line1?.trim() || null, v.line2.trim(), v.line3?.trim() || null,
+          imageSize, fontFamily,
+        ]
+      );
+      generations.push(rows[0]);
+      log('DB saved', { id: rows[0].id });
+    }
 
-    res.json({ generation });
+    // Send all to Telegram
+    for (let i = 0; i < generations.length; i++) {
+      const g       = generations[i];
+      const varTag  = generations.length > 1 ? ` (${i + 1}/${generations.length})` : '';
+      const caption = `🎨 <b>New banner</b>${varTag}\n${vertical} · ${country} · ${subject}${sportType ? ` · ${sportType}` : ''} · ${imageSize}\nLine2: ${g.line2}`;
+      sendPhotoUrl(g.final_url, caption).catch(err => console.error('[TG] send failed:', err.message));
+    }
+
+    res.json({ generations });
   } catch (err) {
     console.error(`[${new Date().toISOString()}] GENERATE error:`, err);
     res.status(500).json({ error: err.message });
@@ -174,7 +198,7 @@ router.post('/:id/regenerate', async (req, res) => {
     const generation = rows[0];
 
     sendPhotoUrl(finalUrl, `♻️ <b>Regenerated</b>\n${g.vertical ?? ''} · ${g.line2 || g.banner_text}`)
-      .catch((err) => console.error('[TG] send failed:', err.message));
+      .catch(err => console.error('[TG] send failed:', err.message));
 
     res.json({ generation });
   } catch (err) {

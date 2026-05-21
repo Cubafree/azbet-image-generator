@@ -231,6 +231,14 @@
                 <small class="field-hint" data-i18n="line3Hint">≈ 10–15 лат. / ≈ 7–10 арабских</small>
               </div>
 
+              <!-- Extra variant blocks injected here -->
+              <div id="extraVariants"></div>
+
+              <label class="toggle-label variant-trigger" id="variantTrigger">
+                <input type="checkbox" id="variantCb0" onchange="addVariantBlock(0)" />
+                <span data-i18n="addVariant">➕ Сгенерировать с другим промокодом</span>
+              </label>
+
             </div>
           </div>
         </div><!-- /accText -->
@@ -332,7 +340,10 @@
       <p class="skeleton-hint" data-i18n="skHint">Перетаскивайте элементы · позиции передаются в генерацию</p>
     </div>
 
-    <!-- Превью -->
+    <!-- Мульти-вариант результаты -->
+    <div id="variantsSection" class="variants-section hidden"></div>
+
+    <!-- Превью (одиночный вариант) -->
     <div id="previewSection" class="preview-section hidden">
       <div class="preview-inner">
         <div class="preview-img-col">
@@ -369,7 +380,7 @@
             <th data-i18n="colVertical">Вертикаль</th>
             <th data-i18n="colCountry">Страна</th>
             <th data-i18n="colLine2">Строка 2</th>
-            <th data-i18n="colStatus">Статус</th>
+            <th>URL</th>
             <th data-i18n="colCreated">Создано</th>
           </tr>
         </thead>
