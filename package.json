@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "mcp": "node mcp-server.js",
     "upload-assets": "node scripts/upload-assets.js",
     "gen-plashkas": "node scripts/generate-plashka-svgs.js"
   },
