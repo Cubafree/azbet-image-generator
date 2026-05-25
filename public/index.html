@@ -158,7 +158,7 @@
               </div>
 
               <span class="field-label" data-i18n="plashkaStyleLabel">Стиль плашки</span>
-              <div class="radio-group">
+              <div class="radio-group" id="plashkaStyleGroup">
                 <label class="radio-card">
                   <input type="radio" name="plashkaStyle" value="filled" checked onchange="onVisualChange()" />
                   <svg class="style-icon" width="22" height="13" viewBox="0 0 22 13">
@@ -174,6 +174,13 @@
                   <span data-i18n="bordered">Контурная</span>
                 </label>
               </div>
+
+              <div class="no-text-divider"></div>
+              <label class="toggle-label no-text-toggle">
+                <input type="checkbox" id="noTextMode" onchange="onNoTextModeChange(); onVisualChange()" />
+                <span data-i18n="noTextMode">🖼 Без баннера — только картинка</span>
+              </label>
+              <small class="field-hint" data-i18n="noTextModeHint">Логотип + иконки приложений, без плашки и текста</small>
 
             </div>
           </div>
@@ -196,48 +203,53 @@
                 data-i18n-placeholder="scenePlaceholder"
                 placeholder="Опишите что хотите увидеть…"></textarea>
 
-              <label class="field-label line-label-row" for="line1Input">
-                <span data-i18n="line1Label">Строка 1</span>
-                <span class="optional" data-i18n="line1Optional">без подложки, необязательно</span>
-                <span class="char-count" id="cnt1">0</span>
-              </label>
-              <input id="line1Input" type="text" class="input-field"
-                placeholder="BONUS DE DÉPÔT"
-                oninput="updateCharCount('line1Input','cnt1',28); updateSkeletonText()" />
-              <small class="field-hint" data-i18n="line1Hint">≈ 25–30 лат. / ≈ 15–20 арабских</small>
+              <!-- Text overlay fields — hidden/disabled in noTextMode -->
+              <div id="textOverlayFields">
 
-              <label class="field-label line-label-row" for="line2Input">
-                <span data-i18n="line2Label">Строка 2</span>
-                <span class="required" data-i18n="line2Required">на плашке, обязательно</span>
-                <span class="char-count" id="cnt2">0</span>
-              </label>
-              <input id="line2Input" type="text" class="input-field"
-                placeholder="100% + 30 TOURS"
-                oninput="updateCharCount('line2Input','cnt2',18); updateSkeletonText(); updateFontPreview()" />
-              <small class="field-hint" data-i18n="line2Hint">≈ 15–20 лат. / ≈ 10–14 арабских</small>
-
-              <label class="toggle-label">
-                <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
-                <span data-i18n="line3Toggle">Добавить доп. строку (пилл)</span>
-              </label>
-              <div id="line3Row" class="hidden">
-                <label class="field-label line-label-row" for="line3">
-                  <span data-i18n="line3Label">Доп. строка</span>
-                  <span class="char-count" id="cnt3">0</span>
+                <label class="field-label line-label-row" for="line1Input">
+                  <span data-i18n="line1Label">Строка 1</span>
+                  <span class="optional" data-i18n="line1Optional">без подложки, необязательно</span>
+                  <span class="char-count" id="cnt1">0</span>
                 </label>
-                <input id="line3" type="text" class="input-field"
-                  placeholder="78K + 150FS"
-                  oninput="updateCharCount('line3','cnt3',14); updateSkeletonText()" />
-                <small class="field-hint" data-i18n="line3Hint">≈ 10–15 лат. / ≈ 7–10 арабских</small>
-              </div>
+                <input id="line1Input" type="text" class="input-field"
+                  placeholder="BONUS DE DÉPÔT"
+                  oninput="updateCharCount('line1Input','cnt1',28); updateSkeletonText()" />
+                <small class="field-hint" data-i18n="line1Hint">≈ 25–30 лат. / ≈ 15–20 арабских</small>
 
-              <!-- Extra variant blocks injected here -->
-              <div id="extraVariants"></div>
+                <label class="field-label line-label-row" for="line2Input">
+                  <span data-i18n="line2Label">Строка 2</span>
+                  <span class="required" data-i18n="line2Required">на плашке, обязательно</span>
+                  <span class="char-count" id="cnt2">0</span>
+                </label>
+                <input id="line2Input" type="text" class="input-field"
+                  placeholder="100% + 30 TOURS"
+                  oninput="updateCharCount('line2Input','cnt2',18); updateSkeletonText(); updateFontPreview()" />
+                <small class="field-hint" data-i18n="line2Hint">≈ 15–20 лат. / ≈ 10–14 арабских</small>
 
-              <label class="toggle-label variant-trigger" id="variantTrigger">
-                <input type="checkbox" id="variantCb0" onchange="addVariantBlock(0)" />
-                <span data-i18n="addVariant">➕ Сгенерировать с другим промокодом</span>
-              </label>
+                <label class="toggle-label">
+                  <input type="checkbox" id="line3Toggle" onchange="toggleLine3()" />
+                  <span data-i18n="line3Toggle">Добавить доп. строку (пилл)</span>
+                </label>
+                <div id="line3Row" class="hidden">
+                  <label class="field-label line-label-row" for="line3">
+                    <span data-i18n="line3Label">Доп. строка</span>
+                    <span class="char-count" id="cnt3">0</span>
+                  </label>
+                  <input id="line3" type="text" class="input-field"
+                    placeholder="78K + 150FS"
+                    oninput="updateCharCount('line3','cnt3',14); updateSkeletonText()" />
+                  <small class="field-hint" data-i18n="line3Hint">≈ 10–15 лат. / ≈ 7–10 арабских</small>
+                </div>
+
+                <!-- Extra variant blocks injected here -->
+                <div id="extraVariants"></div>
+
+                <label class="toggle-label variant-trigger" id="variantTrigger">
+                  <input type="checkbox" id="variantCb0" onchange="addVariantBlock(0)" />
+                  <span data-i18n="addVariant">➕ Сгенерировать с другим промокодом</span>
+                </label>
+
+              </div><!-- /textOverlayFields -->
 
             </div>
           </div>

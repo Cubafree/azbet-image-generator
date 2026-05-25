@@ -16,7 +16,7 @@ const VALID = {
 };
 
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2 } = body;
+  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText } = body;
   if (!VALID.vertical.includes(vertical))       return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country))         return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject))         return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -25,11 +25,13 @@ function validate(body) {
   if (vertical === 'sport' && subject !== 'object' && !VALID.sportType.includes(sportType)) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
   }
-  // Accept either variants array or legacy line2
-  const hasLine2 = (variants && variants.length > 0)
-    ? variants.some(v => v.line2?.trim())
-    : !!line2?.trim();
-  if (!hasLine2) return 'line2 is required';
+  // line2 not required in noText mode
+  if (!noText) {
+    const hasLine2 = (variants && variants.length > 0)
+      ? variants.some(v => v.line2?.trim())
+      : !!line2?.trim();
+    if (!hasLine2) return 'line2 is required';
+  }
   if (!['filled', 'bordered'].includes(plashkaStyle)) return 'plashkaStyle must be filled or bordered';
   return null;
 }
@@ -50,18 +52,21 @@ router.post('/', async (req, res) => {
     fontSize   = {},
     customY    = {},
     variants   = null,
+    noText     = false,
     // legacy single-variant fields (fallback)
     line1, line2, line3,
   } = req.body;
 
-  // Build text variants list
-  const textVariants = (variants && variants.length > 0)
-    ? variants.filter(v => v.line2?.trim())
-    : [{ line1: line1?.trim() || null, line2: line2?.trim() || '', line3: line3?.trim() || null }];
+  // noText mode: one variant with no text overlay (logo + frame only)
+  const textVariants = noText
+    ? [{ line1: null, line2: null, line3: null }]
+    : (variants && variants.length > 0)
+        ? variants.filter(v => v.line2?.trim())
+        : [{ line1: line1?.trim() || null, line2: line2?.trim() || '', line3: line3?.trim() || null }];
 
   log('GENERATE request', {
     vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily,
-    variantCount: textVariants.length,
+    noText, variantCount: textVariants.length,
   });
 
   try {

@@ -877,6 +877,31 @@ td:nth-child(2), td:nth-child(3) {
 .hist-row { cursor: pointer; }
 .hist-row:hover td { background: rgba(6,182,212,.05) !important; }
 
+/* ── No-text mode ────────────────────────────────────────────────────────────── */
+.no-text-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.no-text-toggle {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.no-text-toggle:has(input:checked) {
+  color: var(--accent);
+}
+.no-text-toggle:has(input:checked) span {
+  color: var(--accent);
+}
+
+#textOverlayFields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity .2s ease;
+}
+
 /* ── Variant form blocks ─────────────────────────────────────────────────────── */
 .variant-block {
   display: flex;

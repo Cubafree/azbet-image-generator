@@ -46,6 +46,9 @@ const I18N = {
     accTheme: 'Тематика', accVisual: 'Визуал', accText: 'Текст', accFont: 'Типографика',
     customLayout: 'custom layout',
     addVariant: '➕ Сгенерировать с другим промокодом',
+    noTextMode: '🖼 Без баннера — только картинка',
+    noTextModeHint: 'Логотип + иконки приложений, без плашки и текста',
+    noTextSummary: 'без текста',
   },
   en: {
     badge: 'Internal tool',
@@ -91,6 +94,9 @@ const I18N = {
     accTheme: 'Theme', accVisual: 'Visual', accText: 'Text', accFont: 'Typography',
     customLayout: 'custom layout',
     addVariant: '➕ Generate with another promo',
+    noTextMode: '🖼 No banner — image only',
+    noTextModeHint: 'Logo + app badges, no plashka or text',
+    noTextSummary: 'no text',
   },
 };
 
@@ -151,9 +157,10 @@ function onThemeChange() {
 function onVisualChange() {
   updateSkeletonColor();
 
-  const color = getRadioValue('accentColor') || 'cyan';
-  const size  = getRadioValue('imageSize')   || 'portrait';
-  const style = getRadioValue('plashkaStyle');
+  const color   = getRadioValue('accentColor') || 'cyan';
+  const size    = getRadioValue('imageSize')   || 'portrait';
+  const style   = getRadioValue('plashkaStyle');
+  const noText  = document.getElementById('noTextMode')?.checked;
 
   const colorNames = { cyan: 'Cyan', green: 'Green', purple: 'Purple', gold: 'Gold' };
   const sizeNames  = { portrait: '9:16', square: '1:1' };
@@ -161,11 +168,43 @@ function onVisualChange() {
   const parts = [
     colorNames[color] || capFirst(color),
     sizeNames[size]   || size,
-    style ? capFirst(style) : null,
+    noText ? t('noTextSummary') : (style ? capFirst(style) : null),
   ].filter(Boolean);
 
   const el = document.getElementById('sumVisual');
   if (el) el.textContent = parts.join(' · ');
+}
+
+// ── No-text mode ──────────────────────────────────────────────────────────────
+function onNoTextModeChange() {
+  const noText      = document.getElementById('noTextMode')?.checked;
+  const textFields  = document.getElementById('textOverlayFields');
+  const styleGroup  = document.getElementById('plashkaStyleGroup');
+  const accFont     = document.getElementById('accFont');
+  const fontPreview = document.getElementById('fontPreview');
+
+  if (textFields) {
+    textFields.style.opacity        = noText ? '0.35' : '';
+    textFields.style.pointerEvents  = noText ? 'none' : '';
+    textFields.style.userSelect     = noText ? 'none' : '';
+  }
+  // Plashka style becomes irrelevant — dim it
+  if (styleGroup) {
+    styleGroup.style.opacity       = noText ? '0.35' : '';
+    styleGroup.style.pointerEvents = noText ? 'none' : '';
+  }
+  // Typography accordion less relevant — dim header
+  if (accFont) accFont.style.opacity = noText ? '0.4' : '';
+
+  // Hide font preview block since there's no text to preview
+  const fontPreviewBlock = document.getElementById('fontPreview');
+  if (fontPreviewBlock) fontPreviewBlock.style.display = noText ? 'none' : '';
+
+  // Skeleton: hide plashka/pill/line1 elements
+  ['skLine1', 'skPlashka', 'skPill'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = noText ? '0.2' : '';
+  });
 }
 
 function onFontSummaryChange() {
@@ -619,9 +658,10 @@ async function generate() {
     line3: parseInt(document.getElementById('size3').value) || 44,
   };
   const customY  = skCollectCustomY();
-  const variants = collectAllVariants();
+  const noText   = document.getElementById('noTextMode')?.checked || false;
+  const variants = noText ? null : collectAllVariants();
 
-  if (!variants[0]?.line2) {
+  if (!noText && !variants[0]?.line2) {
     showToast(t('toastLine2Required'), 'error');
     return;
   }
@@ -634,8 +674,8 @@ async function generate() {
     const body = {
       vertical, country, subject, sportType, accentColor,
       scenePrompt, imageSize, fontFamily, fontSize, plashkaStyle,
-      variants,
-      ...(customY ? { customY } : {}),
+      ...(noText   ? { noText: true }  : { variants }),
+      ...(customY  ? { customY }        : {}),
     };
 
     const res  = await fetch('/api/generate', {
