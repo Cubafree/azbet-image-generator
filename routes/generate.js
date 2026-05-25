@@ -83,11 +83,13 @@ router.post('/', async (req, res) => {
     const generations = [];
 
     for (const v of textVariants) {
+      const line2val = v.line2?.trim() || null;
+
       const overlayParams = {
         accentColor,
         plashkaStyle,
         line1:      v.line1?.trim() || null,
-        line2:      v.line2.trim(),
+        line2:      line2val,
         line3:      v.line3?.trim() || null,
         fontFamily,
         fontSize,
@@ -95,7 +97,7 @@ router.post('/', async (req, res) => {
         customY,
       };
       const finalUrl = buildOverlayUrl(publicId, overlayParams);
-      log('OVERLAY URL built', { line2: v.line2.trim(), finalUrl });
+      log('OVERLAY URL built', { line2: line2val, finalUrl });
 
       const { rows } = await pool.query(
         `INSERT INTO generations
@@ -104,11 +106,11 @@ router.post('/', async (req, res) => {
             plashka_style, line1, line2, line3, image_size, font_family)
          VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
         [
-          userPrompt, v.line2.trim(), publicId, finalUrl,
+          userPrompt, line2val, publicId, finalUrl,
           vertical, country, subject,
           vertical === 'sport' ? (sportType || null) : null,
           accentColor, scenePrompt?.trim() || null,
-          plashkaStyle, v.line1?.trim() || null, v.line2.trim(), v.line3?.trim() || null,
+          plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
           imageSize, fontFamily,
         ]
       );
