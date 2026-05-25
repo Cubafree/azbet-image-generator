@@ -83,7 +83,9 @@ router.post('/', async (req, res) => {
     const generations = [];
 
     for (const v of textVariants) {
-      const line2val = v.line2?.trim() || null;
+      // banner_text is NOT NULL in DB — use empty string sentinel for noText mode
+      const line2val    = v.line2?.trim() || null;
+      const bannerText  = line2val ?? '';
 
       const overlayParams = {
         accentColor,
@@ -106,7 +108,7 @@ router.post('/', async (req, res) => {
             plashka_style, line1, line2, line3, image_size, font_family)
          VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
         [
-          userPrompt, line2val, publicId, finalUrl,
+          userPrompt, bannerText, publicId, finalUrl,
           vertical, country, subject,
           vertical === 'sport' ? (sportType || null) : null,
           accentColor, scenePrompt?.trim() || null,
