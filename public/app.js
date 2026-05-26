@@ -57,6 +57,10 @@ const I18N = {
     presetBannerSummary: 'пресет',
     presetBannerNoLibya: 'Для Ливии нет готового баннера',
     skPresetBanner: '📋 Готовый баннер',
+    accThemes: 'Темы сцены',
+    themesHint: 'Каждая тема — отдельная картинка',
+    themesNoCasino: 'Только для казино',
+    themesNoLibya: 'Для Ливии нет тем',
   },
   en: {
     badge: 'Internal tool',
@@ -113,7 +117,66 @@ const I18N = {
     presetBannerSummary: 'preset',
     presetBannerNoLibya: 'No preset banner available for Libya',
     skPresetBanner: '📋 Preset banner',
+    accThemes: 'Scene themes',
+    themesHint: 'Each theme generates a separate image',
+    themesNoCasino: 'Casino only',
+    themesNoLibya: 'No themes for Libya',
   },
+};
+
+const CASINO_THEMES_UI = {
+  egypt: [
+    { key: 'day',            label: 'День' },
+    { key: 'night',          label: 'Ночь' },
+    { key: 'palms',          label: 'Пальмы' },
+    { key: 'sea',            label: 'Море' },
+    { key: 'pyramids',       label: 'Пирамиды' },
+    { key: 'sphinx',         label: 'Сфинкс' },
+    { key: 'yachts',         label: 'Яхты' },
+    { key: 'gold_room',      label: 'Золото' },
+    { key: 'sportscar',      label: 'Спорткар' },
+    { key: 'villa_pyramids', label: 'Вилла у пирамид' },
+    { key: 'villa_sea',      label: 'Вилла у моря' },
+  ],
+  morocco: [
+    { key: 'day',              label: 'День' },
+    { key: 'night',            label: 'Ночь' },
+    { key: 'kasbah',           label: 'Касба' },
+    { key: 'bahia_palace',     label: 'Дворец Бахия' },
+    { key: 'jemaa_fna',        label: 'Пл. Джемаа-эль-Фна' },
+    { key: 'draa_valley',      label: 'Долина Драа' },
+    { key: 'minaret',          label: 'Минарет' },
+    { key: 'tall_palms',       label: 'Пышные пальмы' },
+    { key: 'red_walls',        label: 'Красные стены' },
+    { key: 'red_columns',      label: 'Красные колонны' },
+    { key: 'desert_oasis',     label: 'Пустыня с оазисом' },
+    { key: 'sportscar_desert', label: 'Спорткар в пустыне' },
+    { key: 'canyon',           label: 'Ущелье' },
+    { key: 'blue_city',        label: 'Голубой город' },
+    { key: 'majorelle',        label: 'Сад Мажорель' },
+    { key: 'marrakesh',        label: 'Марракеш' },
+    { key: 'essaouira',        label: 'Эс-Сувейра' },
+    { key: 'agadir',           label: 'Агадир' },
+  ],
+  algeria: [
+    { key: 'day',             label: 'День' },
+    { key: 'night',           label: 'Ночь' },
+    { key: 'roman_ruins',     label: 'Римские руины' },
+    { key: 'mountain_sahara', label: 'Горная Сахара' },
+    { key: 'timgad',          label: 'Тимгад' },
+    { key: 'trajans_arch',    label: 'Арка Траяна' },
+    { key: 'amphitheater',    label: 'Амфитеатр' },
+    { key: 'djemila',         label: 'Джемила' },
+    { key: 'tipaza',          label: 'Типаза' },
+    { key: 'kasbah_algiers',  label: 'Касба Алжира' },
+    { key: 'stele',           label: 'Стела' },
+    { key: 'algiers_tower',   label: 'Алжирская башня' },
+    { key: 'constantine',     label: 'Константина' },
+    { key: 'assekrem',        label: 'Плато Асекрем' },
+    { key: 'oran',            label: 'Оран' },
+    { key: 'tlemcen',         label: 'Тлемсен' },
+    { key: 'ghardaia',        label: 'Гардая' },
+  ],
 };
 
 let lang = localStorage.getItem('lang') || 'ru';
@@ -135,6 +198,7 @@ function applyLang() {
   onVisualChange();
   onFontSummaryChange();
   updateSkeletonText();
+  updateThemesSummary();
 }
 
 function toggleLang() {
@@ -150,23 +214,73 @@ function toggleAcc(id) {
   item.classList.toggle('is-open');
 }
 
+// ── Scene theme picker ────────────────────────────────────────────────────────
+function renderThemePicker() {
+  const grid    = document.getElementById('themesGrid');
+  const hint    = document.querySelector('#accThemes .field-hint');
+  if (!grid) return;
+
+  const vertical = getRadioValue('vertical');
+  const country  = getRadioValue('country');
+  const themes   = CASINO_THEMES_UI[country];
+
+  if (vertical !== 'casino' || !themes) {
+    const msg = vertical !== 'casino' ? t('themesNoCasino') : t('themesNoLibya');
+    grid.innerHTML = `<span class="themes-unavailable">${msg}</span>`;
+    updateThemesSummary();
+    return;
+  }
+
+  // Preserve current checked state before re-render
+  const checked = new Set(collectThemes());
+
+  grid.innerHTML = themes.map(({ key, label }) => `
+    <label class="theme-chip${checked.has(key) ? ' is-checked' : ''}" id="themeChip_${key}">
+      <input type="checkbox" value="${key}" ${checked.has(key) ? 'checked' : ''}
+        onchange="onThemeChipChange('${key}')" />
+      ${label}
+    </label>
+  `).join('');
+
+  updateThemesSummary();
+}
+
+function onThemeChipChange(key) {
+  const chip = document.getElementById(`themeChip_${key}`);
+  const cb   = chip?.querySelector('input[type=checkbox]');
+  if (chip && cb) chip.classList.toggle('is-checked', cb.checked);
+  updateThemesSummary();
+}
+
+function collectThemes() {
+  const grid = document.getElementById('themesGrid');
+  if (!grid) return [];
+  return Array.from(grid.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+function updateThemesSummary() {
+  const el     = document.getElementById('sumThemes');
+  if (!el) return;
+  const themes = collectThemes();
+  el.textContent = themes.length > 0 ? `${themes.length} тем` : '';
+}
+
 // ── Accordion summaries ───────────────────────────────────────────────────────
 function onThemeChange() {
   updateSportTypeVisibility();
-
-  // If country switched to Libya while preset mode is on — disable preset
-  const cb      = document.getElementById('presetBannerMode');
-  const country = getRadioValue('country');
-  if (cb?.checked && !PRESET_BANNER_COUNTRIES.has(country)) {
-    cb.checked = false;
-    onPresetBannerChange();
-    showToast(t('presetBannerNoLibya'), 'error');
-  }
 
   const vertical = getRadioValue('vertical');
   const country  = getRadioValue('country');
   const subject  = getRadioValue('subject');
   const sport    = getRadioValue('sportType');
+
+  // If country switched to Libya while preset mode is on — disable preset
+  const cb = document.getElementById('presetBannerMode');
+  if (cb?.checked && !PRESET_BANNER_COUNTRIES.has(country)) {
+    cb.checked = false;
+    onPresetBannerChange();
+    showToast(t('presetBannerNoLibya'), 'error');
+  }
 
   const parts = [
     vertical ? capFirst(vertical) : null,
@@ -177,6 +291,8 @@ function onThemeChange() {
 
   const el = document.getElementById('sumTheme');
   if (el) el.textContent = parts.join(' · ');
+
+  renderThemePicker();
 }
 
 function onVisualChange() {
@@ -785,6 +901,7 @@ async function generate() {
   const noFrame      = document.getElementById('noFrameMode')?.checked     || false;
   const presetBanner = document.getElementById('presetBannerMode')?.checked || false;
   const variants     = (noText || presetBanner) ? null : collectAllVariants();
+  const themes       = collectThemes();
 
   if (!noText && !variants[0]?.line2) {
     showToast(t('toastLine2Required'), 'error');
@@ -802,8 +919,9 @@ async function generate() {
       ...(noText        ? { noText: true }        : {}),
       ...(presetBanner  ? { presetBanner: true }  : {}),
       ...(!noText && !presetBanner ? { variants } : {}),
-      ...(noFrame  ? { noFrame: true } : {}),
-      ...(customY  ? { customY }       : {}),
+      ...(noFrame           ? { noFrame: true }    : {}),
+      ...(customY           ? { customY }          : {}),
+      ...(themes.length > 0 ? { themes }           : {}),
     };
 
     const res  = await fetch('/api/generate', {

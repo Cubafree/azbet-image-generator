@@ -3,15 +3,15 @@ const { PROMPT_BLOCKS: B } = require('./config');
 const DEFAULT_SCENES = {
   casino: {
     woman: {
-      egypt: 'A beautiful Egyptian woman in elegant traditional attire holding a glowing slot reel, surrounded by floating gold coins and gems, ancient temple background.',
-      morocco: 'A beautiful Moroccan woman in ornate kaftan holding playing cards, surrounded by floating gold coins, Moroccan riad background with lantern light.',
-      algeria: 'A beautiful Algerian woman in traditional karakou dress surrounded by floating casino chips and gold coins, Andalusian architecture background.',
+      egypt: 'A beautiful Egyptian woman in elegant traditional attire holding a glowing slot reel, surrounded by floating gold coins and gems.',
+      morocco: 'A beautiful Moroccan woman in ornate kaftan holding playing cards, surrounded by floating gold coins.',
+      algeria: 'A beautiful Algerian woman in traditional karakou dress surrounded by floating casino chips and gold coins.',
       libya: 'A beautiful Libyan woman in modest traditional dress reaching toward a glowing slot reel, desert ruins at night background.',
     },
     man: {
-      egypt: 'A confident Egyptian man in white thobe surrounded by glowing casino objects and floating gold coins, ancient Egyptian temple background.',
-      morocco: 'A confident Moroccan man in embroidered kaftan holding playing cards, floating gold coins, Moroccan riad background.',
-      algeria: 'A confident Algerian man in traditional jacket celebrating near glowing slot reels and gold coins, Algerian architecture background.',
+      egypt: 'A confident Egyptian man in white thobe surrounded by glowing casino objects and floating gold coins.',
+      morocco: 'A confident Moroccan man in embroidered kaftan holding playing cards, floating gold coins.',
+      algeria: 'A confident Algerian man in traditional jacket celebrating near glowing slot reels and gold coins.',
       libya: 'A confident Libyan man in white thobe with traditional vest surrounded by casino chips and gold coins, desert landscape background.',
     },
     object: 'Dramatic arrangement of glowing casino objects: slot reel drum showing 777, casino chips, playing cards, floating gold coins — dynamic mid-air composition with cinematic neon lighting.',
@@ -34,7 +34,7 @@ const DEFAULT_SCENES = {
 };
 
 function buildPrompt(params) {
-  const { vertical, country, subject, sportType, accentColor, scenePrompt } = params;
+  const { vertical, country, subject, sportType, accentColor, scenePrompt, theme } = params;
 
   const blocks = [
     B.BASE_VERTICAL[vertical],
@@ -44,6 +44,10 @@ function buildPrompt(params) {
 
   if (vertical === 'sport' && subject !== 'object') {
     blocks.push(B.SPORT_BLOCK[sportType || 'general']);
+  }
+
+  if (vertical === 'casino' && theme && B.CASINO_THEMES?.[country]?.[theme]) {
+    blocks.push(B.CASINO_THEMES[country][theme]);
   }
 
   blocks.push(B.COLOR_BLOCK[accentColor]);

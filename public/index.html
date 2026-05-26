@@ -6,6 +6,17 @@
   <title>Banner Gen</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Bebas+Neue&family=Anton&family=Barlow+Condensed:wght@700&family=Teko:wght@700&family=Montserrat:wght@700&family=Raleway:wght@700&family=Roboto:wght@700&family=Poppins:wght@700&family=Inter:wght@700&family=Exo+2:wght@700&family=Orbitron:wght@700&display=swap" />
+  <style>
+.themes-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.theme-chip { display:flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px;
+  border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06);
+  cursor:pointer; font-size:12px; color:var(--text-muted); transition:all .15s; }
+.theme-chip:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
+.theme-chip input[type=checkbox] { width:13px; height:13px; cursor:pointer; }
+.theme-chip.is-checked { border-color:var(--accent); background:rgba(0,212,255,0.12); color:var(--text); }
+.themes-count { font-size:11px; color:var(--accent); margin-top:4px; }
+.themes-unavailable { font-size:12px; color:var(--text-muted); font-style:italic; }
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -268,6 +279,24 @@
             </div>
           </div>
         </div><!-- /accText -->
+
+        <!-- ── 3б. Темы сцены (казино) ────────────────────────────────── -->
+        <div class="acc-item" id="accThemes">
+          <button class="acc-hdr" onclick="toggleAcc('accThemes')">
+            <span class="acc-icon">🏛</span>
+            <div class="acc-meta">
+              <span class="acc-title" data-i18n="accThemes">Темы сцены</span>
+              <span class="acc-summary" id="sumThemes"></span>
+            </div>
+            <span class="acc-chevron">›</span>
+          </button>
+          <div class="acc-body">
+            <div class="acc-fields">
+              <small class="field-hint" data-i18n="themesHint">Каждая тема — отдельная картинка</small>
+              <div id="themesGrid" class="themes-grid"></div>
+            </div>
+          </div>
+        </div><!-- /accThemes -->
 
         <!-- ── 4. Типографика ──────────────────────────────────────────── -->
         <div class="acc-item" id="accFont">

@@ -17,8 +17,14 @@ const VALID = {
 
 const PRESET_BANNER_COUNTRIES = new Set(['egypt', 'morocco', 'algeria']);
 
+const THEMES_BY_COUNTRY = {
+  egypt:   new Set(['day','night','palms','sea','pyramids','sphinx','yachts','gold_room','sportscar','villa_pyramids','villa_sea']),
+  morocco: new Set(['day','night','kasbah','bahia_palace','jemaa_fna','draa_valley','minaret','tall_palms','red_walls','red_columns','desert_oasis','sportscar_desert','canyon','blue_city','majorelle','marrakesh','essaouira','agadir']),
+  algeria: new Set(['day','night','roman_ruins','mountain_sahara','timgad','trajans_arch','amphitheater','djemila','tipaza','kasbah_algiers','stele','algiers_tower','constantine','assekrem','oran','tlemcen','ghardaia']),
+};
+
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText, presetBanner } = body;
+  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText, presetBanner, themes } = body;
   if (!VALID.vertical.includes(vertical))       return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country))         return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject))         return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -29,6 +35,12 @@ function validate(body) {
   }
   if (presetBanner && !PRESET_BANNER_COUNTRIES.has(country)) {
     return `presetBanner is not available for country: ${country}`;
+  }
+  if (themes && themes.length > 0) {
+    if (vertical !== 'casino') return 'themes are only supported for vertical=casino';
+    if (!THEMES_BY_COUNTRY[country]) return `themes not available for country: ${country}`;
+    const invalid = themes.find(k => !THEMES_BY_COUNTRY[country].has(k));
+    if (invalid) return `unknown theme "${invalid}" for country ${country}`;
   }
   // line2 not required in noText or presetBanner mode
   if (!noText && !presetBanner) {
@@ -60,6 +72,7 @@ router.post('/', async (req, res) => {
     noText        = false,
     noFrame       = false,
     presetBanner  = false,
+    themes        = null,
     // legacy single-variant fields (fallback)
     line1, line2, line3,
   } = req.body;
@@ -71,63 +84,71 @@ router.post('/', async (req, res) => {
         ? variants.filter(v => v.line2?.trim())
         : [{ line1: line1?.trim() || null, line2: line2?.trim() || '', line3: line3?.trim() || null }];
 
+  const themesToProcess = (themes && themes.length > 0 && vertical === 'casino' && country !== 'libya')
+    ? themes : [null];
+
   log('GENERATE request', {
     vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily,
-    noText, noFrame, presetBanner, variantCount: textVariants.length,
+    noText, noFrame, presetBanner, variantCount: textVariants.length, themeCount: themesToProcess.length,
   });
 
   try {
-    const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt });
-    log('PROMPT built', { userPromptLength: userPrompt.length });
-
-    const imageBuffer = await generateImage({ systemPrompt, userPrompt, imageSize });
-    log('IMAGE generated', { bytes: imageBuffer.length, imageSize });
-
-    const uploadResult = await uploadImage(imageBuffer);
-    const publicId = uploadResult.public_id;
-    log('IMAGE uploaded', { publicId });
-
     const generations = [];
 
-    for (const v of textVariants) {
-      // banner_text is NOT NULL in DB — use empty string sentinel for noText mode
-      const line2val    = v.line2?.trim() || null;
-      const bannerText  = line2val ?? '';
+    for (const theme of themesToProcess) {
+      const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt, theme });
+      log('PROMPT built', { theme, userPromptLength: userPrompt.length });
 
-      const overlayParams = {
-        accentColor,
-        plashkaStyle,
-        line1:        v.line1?.trim() || null,
-        line2:        line2val,
-        line3:        v.line3?.trim() || null,
-        fontFamily,
-        fontSize,
-        imageSize,
-        customY,
-        noFrame,
-        presetBanner,
-        country,
-      };
-      const finalUrl = buildOverlayUrl(publicId, overlayParams);
-      log('OVERLAY URL built', { line2: line2val, finalUrl });
+      const imageBuffer = await generateImage({ systemPrompt, userPrompt, imageSize });
+      log('IMAGE generated', { theme, bytes: imageBuffer.length, imageSize });
 
-      const { rows } = await pool.query(
-        `INSERT INTO generations
-           (prompt, banner_text, cloudinary_public_id, final_url, status,
-            vertical, country, subject, sport_type, accent_color, scene_prompt,
-            plashka_style, line1, line2, line3, image_size, font_family)
-         VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-        [
-          userPrompt, bannerText, publicId, finalUrl,
-          vertical, country, subject,
-          vertical === 'sport' ? (sportType || null) : null,
-          accentColor, scenePrompt?.trim() || null,
-          plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
-          imageSize, fontFamily,
-        ]
-      );
-      generations.push(rows[0]);
-      log('DB saved', { id: rows[0].id });
+      const uploadResult = await uploadImage(imageBuffer);
+      const publicId = uploadResult.public_id;
+      log('IMAGE uploaded', { theme, publicId });
+
+      for (const v of textVariants) {
+        // banner_text is NOT NULL in DB — use empty string sentinel for noText mode
+        const line2val    = v.line2?.trim() || null;
+        const bannerText  = line2val ?? '';
+        const scenePromptStored = theme
+          ? `[theme:${theme}]${scenePrompt?.trim() ? ` ${scenePrompt.trim()}` : ''}`
+          : (scenePrompt?.trim() || null);
+
+        const overlayParams = {
+          accentColor,
+          plashkaStyle,
+          line1:        v.line1?.trim() || null,
+          line2:        line2val,
+          line3:        v.line3?.trim() || null,
+          fontFamily,
+          fontSize,
+          imageSize,
+          customY,
+          noFrame,
+          presetBanner,
+          country,
+        };
+        const finalUrl = buildOverlayUrl(publicId, overlayParams);
+        log('OVERLAY URL built', { theme, line2: line2val, finalUrl });
+
+        const { rows } = await pool.query(
+          `INSERT INTO generations
+             (prompt, banner_text, cloudinary_public_id, final_url, status,
+              vertical, country, subject, sport_type, accent_color, scene_prompt,
+              plashka_style, line1, line2, line3, image_size, font_family)
+           VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+          [
+            userPrompt, bannerText, publicId, finalUrl,
+            vertical, country, subject,
+            vertical === 'sport' ? (sportType || null) : null,
+            accentColor, scenePromptStored,
+            plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
+            imageSize, fontFamily,
+          ]
+        );
+        generations.push(rows[0]);
+        log('DB saved', { theme, id: rows[0].id });
+      }
     }
 
     // Send all to Telegram
