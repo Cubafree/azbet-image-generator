@@ -1,6 +1,7 @@
 const SIZE_MAP = {
-  portrait: '1024x1536',
-  square:   '1024x1024',
+  portrait:  '1024x1536',
+  square:    '1024x1024',
+  landscape: '1536x1024',
 };
 
 async function generateImage({ systemPrompt, userPrompt, imageSize = 'portrait' }) {

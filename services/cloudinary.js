@@ -19,9 +19,11 @@ const IMG_W = 1024;
 
 // Default overlay positions per image format
 // plashka / logo / line1 are Y from north; frameY is distance from south
+// Landscape values are in 4096×2286 coordinate space (overlayScale=4 applied to widths)
 const POSITION_DEFAULTS = {
-  portrait: { logo: 55, line1: 220, plashka: 275, frameY: 80 },
-  square:   { logo: 40, line1: 150, plashka: 185, frameY: 60 },
+  portrait:  { logo: 55,  line1: 220, plashka: 275, frameY: 80  },
+  square:    { logo: 40,  line1: 150, plashka: 185, frameY: 60  },
+  landscape: { logo: 82,  line1: 327, plashka: 409, frameY: 119 },
 };
 
 // SVG plashka dimensions (matches generate-plashka-svgs.js)
@@ -31,17 +33,19 @@ const GAP        = 6;    // gap between plashka bottom and pill top
 const PILL_H     = 68;
 
 // Build the full Y lookup, deriving text positions from plashkaTop
+// os = overlay scale (4 for landscape, 1 otherwise) — scales plashka/pill heights
 function buildY(imageSize, customY = {}) {
-  const d = POSITION_DEFAULTS[imageSize] || POSITION_DEFAULTS.portrait;
+  const d  = POSITION_DEFAULTS[imageSize] || POSITION_DEFAULTS.portrait;
+  const os = imageSize === 'landscape' ? 4 : 1;
   const plashkaTop = customY.plashka ?? d.plashka;
   return {
     logo:      customY.logo    ?? d.logo,
     line1:     customY.line1   ?? d.line1,
     plashka:   plashkaTop,
-    // text vertically centred inside plashka (PLASHKA_H=100, font≈58 → half=29)
-    line2Text: plashkaTop + Math.round(PLASHKA_H / 2) - 29,
-    // text centred in pill: plashka_bottom + gap + pill_half − font_half(44/2=22)
-    line3Text: plashkaTop + PLASHKA_H + GAP + Math.round(PILL_H / 2) - 22,
+    // text vertically centred inside plashka
+    line2Text: plashkaTop + Math.round((PLASHKA_H * os) / 2) - Math.round(29 * os),
+    // text centred in pill: plashka_bottom + gap + pill_half − font_half
+    line3Text: plashkaTop + PLASHKA_H * os + GAP * os + Math.round((PILL_H * os) / 2) - Math.round(22 * os),
     frameY:    customY.frameY  ?? d.frameY,
   };
 }
@@ -101,24 +105,32 @@ function buildOverlayUrl(imagePublicId, params) {
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
   const { logoPublicId, framePublicIds, plashkaPublicIds } = CLOUDINARY_CONFIG;
 
+  // Landscape (4096×2286) scales all overlay dimensions by 4 vs the 1024-base formats
+  const os = imageSize === 'landscape' ? 4 : 1;
+
   const Y = buildY(imageSize, customY);
 
-  const fs1 = fontSize.line1 || 52;
-  const fs2 = fontSize.line2 || 58;
-  const fs3 = fontSize.line3 || 44;
+  const fs1 = fontSize.line1 || 52 * os;
+  const fs2 = fontSize.line2 || 58 * os;
+  const fs3 = fontSize.line3 || 44 * os;
 
   const t = [];
+
+  // ── STEP 0 — Resize to final canvas (landscape only) ─────────────────────────
+  if (imageSize === 'landscape') {
+    t.push({ width: 4096, height: 2286, crop: 'fill', gravity: 'center' });
+  }
 
   // ── LAYER 0 — App-store badge panel (south) ──────────────────────────────────
   const frameId = framePublicIds?.[accentColor];
   if (frameId) {
-    t.push({ overlay: cldId(frameId), width: 614 });
+    t.push({ overlay: cldId(frameId), width: 614 * os });
     t.push({ flags: 'layer_apply', gravity: 'south', y: Y.frameY });
   }
 
   // ── LAYER 1 — Logo (top centre) ──────────────────────────────────────────────
   if (logoPublicId) {
-    t.push({ overlay: cldId(logoPublicId), width: 240 });
+    t.push({ overlay: cldId(logoPublicId), width: 240 * os });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.logo });
   }
 
@@ -132,7 +144,7 @@ function buildOverlayUrl(imagePublicId, params) {
         text:        line1.trim(),
       },
       color: 'rgb:ffffff',
-      width: 900,
+      width: 900 * os,
       crop:  'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line1 });
@@ -144,7 +156,7 @@ function buildOverlayUrl(imagePublicId, params) {
     const plashId = plashkaPublicIds?.[type]?.[accentColor];
 
     if (plashId) {
-      t.push({ overlay: cldId(plashId), width: PLASHKA_W });
+      t.push({ overlay: cldId(plashId), width: PLASHKA_W * os });
       t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.plashka });
     }
 
@@ -159,7 +171,7 @@ function buildOverlayUrl(imagePublicId, params) {
       },
       letter_spacing: 1,
       color: `rgb:${line2Color}`,
-      width: PLASHKA_W - 40,
+      width: (PLASHKA_W - 40) * os,
       crop:  'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line2Text });
@@ -175,7 +187,7 @@ function buildOverlayUrl(imagePublicId, params) {
         text:        line3.trim(),
       },
       color: `rgb:${hex}`,
-      width: 420,
+      width: 420 * os,
       crop:  'fit',
     });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line3Text });

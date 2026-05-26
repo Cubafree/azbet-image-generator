@@ -15,7 +15,7 @@ const I18N = {
     colorLabel: 'Акцентный цвет',
     colorBlue: 'Синий', colorGreen: 'Зелёный', colorPurple: 'Фиолетовый', colorGold: 'Золотой',
     sizeLabel: 'Размер изображения',
-    sizePortrait: '📱 Портрет 9:16', sizeSquare: '⬛ Квадрат 1:1',
+    sizePortrait: '📱 Портрет 9:16', sizeSquare: '⬛ Квадрат 1:1', sizeLandscape: '📺 Горизонт. 16:9',
     sceneLabel: 'Описание сцены', optional: 'необязательно',
     scenePlaceholder: 'Опишите что хотите увидеть (например: женщина в кафтане держит барабан слота, марокканский риад)',
     line1Label: 'Строка 1', line1Optional: 'без подложки, необязательно',
@@ -63,7 +63,7 @@ const I18N = {
     colorLabel: 'Accent color',
     colorBlue: 'Blue', colorGreen: 'Green', colorPurple: 'Purple', colorGold: 'Gold',
     sizeLabel: 'Image size',
-    sizePortrait: '📱 Portrait 9:16', sizeSquare: '⬛ Square 1:1',
+    sizePortrait: '📱 Portrait 9:16', sizeSquare: '⬛ Square 1:1', sizeLandscape: '📺 Landscape 16:9',
     sceneLabel: 'Scene description', optional: 'optional',
     scenePlaceholder: 'Describe what you want to see (e.g. woman in kaftan holding a slot drum, Moroccan riad)',
     line1Label: 'Line 1', line1Optional: 'no background, optional',
@@ -163,7 +163,7 @@ function onVisualChange() {
   const noText  = document.getElementById('noTextMode')?.checked;
 
   const colorNames = { cyan: 'Cyan', green: 'Green', purple: 'Purple', gold: 'Gold' };
-  const sizeNames  = { portrait: '9:16', square: '1:1' };
+  const sizeNames  = { portrait: '9:16', square: '1:1', landscape: '16:9 · 4K' };
 
   const parts = [
     colorNames[color] || capFirst(color),
@@ -251,10 +251,12 @@ function updateSkeletonText() {
 }
 
 // ── Font preview ──────────────────────────────────────────────────────────────
-// Scale factor: preview box (~400px) / banner width (1024px)
-const PREVIEW_SCALE = 400 / 1024;
-
+// Scale factor: preview box (~400px) / banner width in px
+// Dynamic so landscape (4096px wide, 4× font sizes) looks proportionally the same
 function updateFontPreview() {
+  const size    = getImageSize();
+  const imgW    = PREVIEW_IMG_W[size] || 1024;
+  const scale   = 400 / imgW;
   const line2   = document.getElementById('line2Input')?.value.trim();
   const size2   = parseInt(document.getElementById('size2')?.value) || 58;
   const preview = document.getElementById('fontPreview');
@@ -263,7 +265,7 @@ function updateFontPreview() {
   preview.textContent = line2 || 'AaBb 100% BONUS 78K';
 
   // Scaled size gives realistic sense of proportion on the final banner
-  const scaledPx = Math.max(10, Math.round(size2 * PREVIEW_SCALE));
+  const scaledPx = Math.max(10, Math.round(size2 * scale));
   preview.style.fontSize = scaledPx + 'px';
 }
 
@@ -282,15 +284,36 @@ function onFontChange(value) {
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
-const SK_SCALE    = 256 / 1024;   // 0.25 — canvas px per image px
-const SK_CANVAS_H = { portrait: 384, square: 256 };
-const SK_IMAGE_H  = { portrait: 1536, square: 1024 };
+// Canvas is always 256px wide; scale maps image pixels → canvas pixels
+const SK_SCALE_MAP = {
+  portrait:  256 / 1024,   // 0.25
+  square:    256 / 1024,   // 0.25
+  landscape: 256 / 4096,   // 0.0625
+};
+const SK_CANVAS_H = { portrait: 384, square: 256, landscape: 143 };
+const SK_IMAGE_H  = { portrait: 1536, square: 1024, landscape: 2286 };
 
 // Default Y positions in IMAGE space (px from top, except frameY = px from bottom)
+// Landscape values are in 4096×2286 coordinate space
 const SK_DEFAULTS = {
-  portrait: { logo: 55, line1: 220, plashka: 275, frameY: 80 },
-  square:   { logo: 40, line1: 150, plashka: 185, frameY: 60 },
+  portrait:  { logo: 55,  line1: 220, plashka: 275, frameY: 80  },
+  square:    { logo: 40,  line1: 150, plashka: 185, frameY: 60  },
+  landscape: { logo: 82,  line1: 327, plashka: 409, frameY: 119 },
 };
+
+// Default font sizes per image size (landscape uses 4× because the image is 4× wider)
+const FONT_DEFAULTS = {
+  portrait:  { s1: 52,  s2: 58,  s3: 44  },
+  square:    { s1: 52,  s2: 58,  s3: 44  },
+  landscape: { s1: 208, s2: 232, s3: 176 },
+};
+
+// Image widths for font preview scaling
+const PREVIEW_IMG_W = { portrait: 1024, square: 1024, landscape: 4096 };
+
+function getSkScale() {
+  return SK_SCALE_MAP[getImageSize()] || SK_SCALE_MAP.portrait;
+}
 
 // Element heights in canvas px
 const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34 };
@@ -310,29 +333,38 @@ function getImageSize() {
 
 function skInit() {
   const size    = getImageSize();
+  const skScale = getSkScale();
   const canvasH = SK_CANVAS_H[size];
   const d       = SK_DEFAULTS[size];
 
   document.getElementById('skCanvas').style.height = canvasH + 'px';
   skPositions = {};
 
-  skPlace('skLogo',    d.logo    * SK_SCALE);
-  skPlace('skLine1',   d.line1   * SK_SCALE);
-  skPlace('skPlashka', d.plashka * SK_SCALE);
+  skPlace('skLogo',    d.logo    * skScale);
+  skPlace('skLine1',   d.line1   * skScale);
+  skPlace('skPlashka', d.plashka * skScale);
 
-  const pillCanvasY = (d.plashka + 100 + 6) * SK_SCALE;
+  const pillCanvasY = (d.plashka + 100 + 6) * skScale;
   skPlace('skPill', pillCanvasY);
 
   // Frame: positioned from bottom
-  const frameCanvasTop = canvasH - d.frameY * SK_SCALE - SK_H.frame;
+  const frameCanvasTop = canvasH - d.frameY * skScale - SK_H.frame;
   skPlace('skFrame', frameCanvasTop);
+
+  // Auto-set font size defaults for this image size
+  const fd = FONT_DEFAULTS[size] || FONT_DEFAULTS.portrait;
+  document.getElementById('size1').value = fd.s1;
+  document.getElementById('size2').value = fd.s2;
+  document.getElementById('size3').value = fd.s3;
+  onFontSummaryChange();
 
   updateSkeletonColor();
   updateCustomBadge();
 
   // Dimensions label
+  const dimLabels = { portrait: '1024 × 1536', square: '1024 × 1024', landscape: '4096 × 2286' };
   const dimsEl = document.getElementById('skDimensions');
-  if (dimsEl) dimsEl.textContent = size === 'square' ? '1024 × 1024' : '1024 × 1536';
+  if (dimsEl) dimsEl.textContent = dimLabels[size] || '1024 × 1536';
 }
 
 function skPlace(id, canvasY) {
@@ -392,13 +424,14 @@ function makeDraggable(elId, layer) {
 
       const size    = getImageSize();
       const canvasH = SK_CANVAS_H[size];
+      const skScale = getSkScale();
 
       if (layer === 'frame') {
-        const fromBottom = Math.round((canvasH - newTop - SK_H.frame) / SK_SCALE);
+        const fromBottom = Math.round((canvasH - newTop - SK_H.frame) / skScale);
         skPositions.frameY = Math.max(0, fromBottom);
         tip.textContent = `↑ ${skPositions.frameY}px`;
       } else {
-        const imageY = Math.round(newTop / SK_SCALE);
+        const imageY = Math.round(newTop / skScale);
         skPositions[layer] = imageY;
         tip.textContent = `y: ${imageY}px`;
 

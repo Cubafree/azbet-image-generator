@@ -12,7 +12,7 @@ const VALID = {
   subject:     ['woman', 'man', 'object'],
   sportType:   ['football', 'tennis', 'basketball', 'general'],
   accentColor: ['cyan', 'green', 'purple', 'gold'],
-  imageSize:   ['portrait', 'square'],
+  imageSize:   ['portrait', 'square', 'landscape'],
 };
 
 function validate(body) {
