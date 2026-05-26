@@ -52,6 +52,11 @@ const I18N = {
     noFrameMode: '📵 Без нижней плашки с иконками',
     noFrameModeHint: 'Убирает панель App Store / Google Play снизу',
     noFrameSummary: 'без фрейма',
+    presetBannerMode: '🗂 Использовать готовый баннер',
+    presetBannerHint: 'Готовый SVG по стране вместо текстовых слоёв',
+    presetBannerSummary: 'пресет',
+    presetBannerNoLibya: 'Для Ливии нет готового баннера',
+    skPresetBanner: '📋 Готовый баннер',
   },
   en: {
     badge: 'Internal tool',
@@ -103,6 +108,11 @@ const I18N = {
     noFrameMode: '📵 No bottom badge panel',
     noFrameModeHint: 'Removes the App Store / Google Play panel at the bottom',
     noFrameSummary: 'no frame',
+    presetBannerMode: '🗂 Use preset banner',
+    presetBannerHint: 'Country-specific SVG replaces text layers',
+    presetBannerSummary: 'preset',
+    presetBannerNoLibya: 'No preset banner available for Libya',
+    skPresetBanner: '📋 Preset banner',
   },
 };
 
@@ -144,6 +154,15 @@ function toggleAcc(id) {
 function onThemeChange() {
   updateSportTypeVisibility();
 
+  // If country switched to Libya while preset mode is on — disable preset
+  const cb      = document.getElementById('presetBannerMode');
+  const country = getRadioValue('country');
+  if (cb?.checked && !PRESET_BANNER_COUNTRIES.has(country)) {
+    cb.checked = false;
+    onPresetBannerChange();
+    showToast(t('presetBannerNoLibya'), 'error');
+  }
+
   const vertical = getRadioValue('vertical');
   const country  = getRadioValue('country');
   const subject  = getRadioValue('subject');
@@ -163,11 +182,12 @@ function onThemeChange() {
 function onVisualChange() {
   updateSkeletonColor();
 
-  const color   = getRadioValue('accentColor') || 'cyan';
-  const size    = getRadioValue('imageSize')   || 'portrait';
-  const style   = getRadioValue('plashkaStyle');
-  const noText  = document.getElementById('noTextMode')?.checked;
-  const noFrame = document.getElementById('noFrameMode')?.checked;
+  const color        = getRadioValue('accentColor') || 'cyan';
+  const size         = getRadioValue('imageSize')   || 'portrait';
+  const style        = getRadioValue('plashkaStyle');
+  const noText       = document.getElementById('noTextMode')?.checked;
+  const noFrame      = document.getElementById('noFrameMode')?.checked;
+  const presetBanner = document.getElementById('presetBannerMode')?.checked;
 
   const colorNames = { cyan: 'Cyan', green: 'Green', purple: 'Purple', gold: 'Gold' };
   const sizeNames  = { portrait: '9:16', square: '1:1', landscape: '16:9 · 4K' };
@@ -175,7 +195,7 @@ function onVisualChange() {
   const parts = [
     colorNames[color] || capFirst(color),
     sizeNames[size]   || size,
-    noText  ? t('noTextSummary')  : (style ? capFirst(style) : null),
+    presetBanner ? t('presetBannerSummary') : (noText ? t('noTextSummary') : (style ? capFirst(style) : null)),
     noFrame ? t('noFrameSummary') : null,
   ].filter(Boolean);
 
@@ -217,9 +237,57 @@ function onNoTextModeChange() {
 
 function onNoFrameModeChange() {
   const noFrame = document.getElementById('noFrameMode')?.checked;
-  // Dim the frame element in the skeleton
   const skFrame = document.getElementById('skFrame');
   if (skFrame) skFrame.style.opacity = noFrame ? '0.2' : '';
+}
+
+function onPresetBannerChange() {
+  const cb      = document.getElementById('presetBannerMode');
+  const preset  = cb?.checked || false;
+  const country = getRadioValue('country');
+
+  // Libya has no preset — block and warn
+  if (preset && !PRESET_BANNER_COUNTRIES.has(country)) {
+    if (cb) cb.checked = false;
+    showToast(t('presetBannerNoLibya'), 'error');
+    return;
+  }
+
+  // Dim/restore text fields, plashka style, font accordion
+  const textFields  = document.getElementById('textOverlayFields');
+  const styleGroup  = document.getElementById('plashkaStyleGroup');
+  const accFont     = document.getElementById('accFont');
+  if (textFields) {
+    textFields.style.opacity       = preset ? '0.35' : '';
+    textFields.style.pointerEvents = preset ? 'none'  : '';
+    textFields.style.userSelect    = preset ? 'none'  : '';
+  }
+  if (styleGroup) {
+    styleGroup.style.opacity       = preset ? '0.35' : '';
+    styleGroup.style.pointerEvents = preset ? 'none'  : '';
+  }
+  if (accFont) accFont.style.opacity = preset ? '0.4' : '';
+
+  // Skeleton: dim text-related elements, show/hide preset banner block
+  ['skLine1', 'skPlashka', 'skPill'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.opacity = preset ? '0.15' : '';
+  });
+
+  const skPreset = document.getElementById('skPresetBanner');
+  if (skPreset) {
+    skPreset.classList.toggle('hidden', !preset);
+    if (preset) {
+      const size  = getImageSize();
+      const defY  = PRESET_BANNER_DEFAULT_Y[size] || 400;
+      skPlace('skPresetBanner', defY * getSkScale());
+      skPositions.presetBanner = defY;
+    } else {
+      delete skPositions.presetBanner;
+    }
+  }
+
+  updateCustomBadge();
 }
 
 function onFontSummaryChange() {
@@ -331,7 +399,13 @@ function getSkScale() {
 }
 
 // Element heights in canvas px
-const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34 };
+const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34, presetBanner: 48 };
+
+// Countries that have a preset banner SVG
+const PRESET_BANNER_COUNTRIES = new Set(['egypt', 'morocco', 'algeria']);
+
+// Default Y position (image-space, from north) for preset banner per format
+const PRESET_BANNER_DEFAULT_Y = { portrait: 400, square: 280, landscape: 600 };
 
 let skPositions = {};  // overridden positions in IMAGE space
 
@@ -484,10 +558,11 @@ function skCollectCustomY() {
   const d    = SK_DEFAULTS[size];
   const out  = {};
 
-  if (skPositions.logo    !== undefined && skPositions.logo    !== d.logo)    out.logo    = skPositions.logo;
-  if (skPositions.line1   !== undefined && skPositions.line1   !== d.line1)   out.line1   = skPositions.line1;
-  if (skPositions.plashka !== undefined && skPositions.plashka !== d.plashka) out.plashka = skPositions.plashka;
-  if (skPositions.frameY  !== undefined && skPositions.frameY  !== d.frameY)  out.frameY  = skPositions.frameY;
+  if (skPositions.logo         !== undefined && skPositions.logo    !== d.logo)    out.logo    = skPositions.logo;
+  if (skPositions.line1        !== undefined && skPositions.line1   !== d.line1)   out.line1   = skPositions.line1;
+  if (skPositions.plashka      !== undefined && skPositions.plashka !== d.plashka) out.plashka = skPositions.plashka;
+  if (skPositions.frameY       !== undefined && skPositions.frameY  !== d.frameY)  out.frameY  = skPositions.frameY;
+  if (skPositions.presetBanner !== undefined) out.presetBanner = skPositions.presetBanner;
 
   return Object.keys(out).length > 0 ? out : undefined;
 }
@@ -705,10 +780,11 @@ async function generate() {
     line2: parseInt(document.getElementById('size2').value) || 58,
     line3: parseInt(document.getElementById('size3').value) || 44,
   };
-  const customY  = skCollectCustomY();
-  const noText   = document.getElementById('noTextMode')?.checked  || false;
-  const noFrame  = document.getElementById('noFrameMode')?.checked || false;
-  const variants = noText ? null : collectAllVariants();
+  const customY      = skCollectCustomY();
+  const noText       = document.getElementById('noTextMode')?.checked      || false;
+  const noFrame      = document.getElementById('noFrameMode')?.checked     || false;
+  const presetBanner = document.getElementById('presetBannerMode')?.checked || false;
+  const variants     = (noText || presetBanner) ? null : collectAllVariants();
 
   if (!noText && !variants[0]?.line2) {
     showToast(t('toastLine2Required'), 'error');
@@ -723,7 +799,9 @@ async function generate() {
     const body = {
       vertical, country, subject, sportType, accentColor,
       scenePrompt, imageSize, fontFamily, fontSize, plashkaStyle,
-      ...(noText   ? { noText: true }  : { variants }),
+      ...(noText        ? { noText: true }        : {}),
+      ...(presetBanner  ? { presetBanner: true }  : {}),
+      ...(!noText && !presetBanner ? { variants } : {}),
       ...(noFrame  ? { noFrame: true } : {}),
       ...(customY  ? { customY }       : {}),
     };
@@ -960,7 +1038,7 @@ applyLang();
 updateSportTypeVisibility();
 skInit();
 
-['skLogo','skLine1','skPlashka','skPill','skFrame'].forEach((id) => {
+['skLogo','skLine1','skPlashka','skPill','skFrame','skPresetBanner'].forEach((id) => {
   const layer = document.getElementById(id)?.dataset.layer;
   if (layer) makeDraggable(id, layer);
 });

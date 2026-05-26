@@ -15,8 +15,10 @@ const VALID = {
   imageSize:   ['portrait', 'square', 'landscape'],
 };
 
+const PRESET_BANNER_COUNTRIES = new Set(['egypt', 'morocco', 'algeria']);
+
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText } = body;
+  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText, presetBanner } = body;
   if (!VALID.vertical.includes(vertical))       return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country))         return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject))         return `subject must be one of: ${VALID.subject.join(', ')}`;
@@ -25,8 +27,11 @@ function validate(body) {
   if (vertical === 'sport' && subject !== 'object' && !VALID.sportType.includes(sportType)) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
   }
-  // line2 not required in noText mode
-  if (!noText) {
+  if (presetBanner && !PRESET_BANNER_COUNTRIES.has(country)) {
+    return `presetBanner is not available for country: ${country}`;
+  }
+  // line2 not required in noText or presetBanner mode
+  if (!noText && !presetBanner) {
     const hasLine2 = (variants && variants.length > 0)
       ? variants.some(v => v.line2?.trim())
       : !!line2?.trim();
@@ -51,15 +56,16 @@ router.post('/', async (req, res) => {
     fontFamily = 'Oswald',
     fontSize   = {},
     customY    = {},
-    variants   = null,
-    noText     = false,
-    noFrame    = false,
+    variants      = null,
+    noText        = false,
+    noFrame       = false,
+    presetBanner  = false,
     // legacy single-variant fields (fallback)
     line1, line2, line3,
   } = req.body;
 
-  // noText mode: one variant with no text overlay (logo + frame only)
-  const textVariants = noText
+  // noText / presetBanner: single blank variant (text layers skipped in cloudinary)
+  const textVariants = (noText || presetBanner)
     ? [{ line1: null, line2: null, line3: null }]
     : (variants && variants.length > 0)
         ? variants.filter(v => v.line2?.trim())
@@ -67,7 +73,7 @@ router.post('/', async (req, res) => {
 
   log('GENERATE request', {
     vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily,
-    noText, noFrame, variantCount: textVariants.length,
+    noText, noFrame, presetBanner, variantCount: textVariants.length,
   });
 
   try {
@@ -91,14 +97,16 @@ router.post('/', async (req, res) => {
       const overlayParams = {
         accentColor,
         plashkaStyle,
-        line1:      v.line1?.trim() || null,
-        line2:      line2val,
-        line3:      v.line3?.trim() || null,
+        line1:        v.line1?.trim() || null,
+        line2:        line2val,
+        line3:        v.line3?.trim() || null,
         fontFamily,
         fontSize,
         imageSize,
         customY,
         noFrame,
+        presetBanner,
+        country,
       };
       const finalUrl = buildOverlayUrl(publicId, overlayParams);
       log('OVERLAY URL built', { line2: line2val, finalUrl });

@@ -180,7 +180,12 @@
               </div>
 
               <div class="no-text-divider"></div>
-              <label class="toggle-label no-text-toggle">
+              <label class="toggle-label" style="margin-bottom:4px">
+                <input type="checkbox" id="presetBannerMode" onchange="onPresetBannerChange(); onVisualChange()" />
+                <span data-i18n="presetBannerMode">🗂 Использовать готовый баннер</span>
+              </label>
+              <small class="field-hint" id="presetBannerHint" data-i18n="presetBannerHint">Готовый SVG по стране вместо текстовых слоёв</small>
+              <label class="toggle-label no-text-toggle" style="margin-top:8px">
                 <input type="checkbox" id="noTextMode" onchange="onNoTextModeChange(); onVisualChange()" />
                 <span data-i18n="noTextMode">🖼 Без баннера — только картинка</span>
               </label>
@@ -355,6 +360,10 @@
           <div class="sk-elem sk-line1"   id="skLine1"   data-layer="line1">   <span data-i18n="skLine1">Строка 1</span></div>
           <div class="sk-elem sk-plashka" id="skPlashka" data-layer="plashka"><span data-i18n="skLine2">Строка 2</span></div>
           <div class="sk-elem sk-pill hidden" id="skPill" data-layer="pill">  <span data-i18n="skLine3">Строка 3</span></div>
+          <div class="sk-elem sk-preset-banner hidden" id="skPresetBanner" data-layer="presetBanner"
+               style="width:calc(100% - 8px);left:4px;height:48px;border-radius:6px;border:2px dashed rgba(255,255,255,0.5);background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+            <span data-i18n="skPresetBanner">📋 Готовый баннер</span>
+          </div>
           <div class="sk-elem sk-frame"   id="skFrame"   data-layer="frame">  <span data-i18n="skBadges">Badges</span></div>
         </div>
       </div>

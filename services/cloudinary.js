@@ -17,6 +17,20 @@ const ACCENT_MAP = {
 // Image sizes (px) — must match OpenAI output
 const IMG_W = 1024;
 
+// Pre-designed SVG banners per country (Cloudinary public IDs)
+const PRESET_BANNER_IDS = {
+  egypt:   'EG_1_kisvlb',
+  morocco: 'MR_usd4eh',
+  algeria: 'AL_1_iazx1k',
+};
+
+// Default Y position (from north, image-space px) for preset banner per format
+const PRESET_BANNER_DEFAULT_Y = {
+  portrait:  400,
+  square:    280,
+  landscape: 600,
+};
+
 // Default overlay positions per image format
 // plashka / logo / line1 are Y from north; frameY is distance from south
 // Landscape values are in 4096×2286 coordinate space (overlayScale=4 applied to widths)
@@ -98,9 +112,11 @@ function buildOverlayUrl(imagePublicId, params) {
     line3        = null,
     fontFamily   = 'Oswald',
     fontSize     = {},
-    imageSize    = 'portrait',
-    customY      = {},
-    noFrame      = false,
+    imageSize     = 'portrait',
+    customY       = {},
+    noFrame       = false,
+    presetBanner  = false,
+    country       = null,
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
@@ -135,63 +151,73 @@ function buildOverlayUrl(imagePublicId, params) {
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.logo });
   }
 
-  // ── LAYER 2 — Line 1: plain white text ───────────────────────────────────────
-  if (line1?.trim()) {
-    t.push({
-      overlay: {
-        font_family: pickFont(line1, fontFamily),
-        font_size:   fs1,
-        font_weight: 'bold',
-        text:        line1.trim(),
-      },
-      color: 'rgb:ffffff',
-      width: 900 * os,
-      crop:  'fit',
-    });
-    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line1 });
-  }
+  // ── LAYER 2 — Preset SVG banner OR custom text layers ────────────────────────
+  const presetId = presetBanner && country ? PRESET_BANNER_IDS[country] : null;
 
-  // ── LAYER 3 — SVG plashka background ─────────────────────────────────────────
-  if (line2?.trim()) {
-    const type    = plashkaType(plashkaStyle, !!line3?.trim());
-    const plashId = plashkaPublicIds?.[type]?.[accentColor];
-
-    if (plashId) {
-      t.push({ overlay: cldId(plashId), width: PLASHKA_W * os });
-      t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.plashka });
+  if (presetId) {
+    // Pre-designed country banner replaces all text/plashka layers
+    const bannerY = customY.presetBanner ?? (PRESET_BANNER_DEFAULT_Y[imageSize] || 400);
+    t.push({ overlay: cldId(presetId), width: 1024 * os });
+    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: bannerY });
+  } else {
+    // ── Line 1: plain white text ──────────────────────────────────────────────
+    if (line1?.trim()) {
+      t.push({
+        overlay: {
+          font_family: pickFont(line1, fontFamily),
+          font_size:   fs1,
+          font_weight: 'bold',
+          text:        line1.trim(),
+        },
+        color: 'rgb:ffffff',
+        width: 900 * os,
+        crop:  'fit',
+      });
+      t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line1 });
     }
 
-    // ── LAYER 4 — Line 2 text on plashka ─────────────────────────────────────
-    const line2Color = plashkaStyle === 'bordered' ? 'ffffff' : textHex;
-    t.push({
-      overlay: {
-        font_family: pickFont(line2, fontFamily),
-        font_size:   fs2,
-        font_weight: 'bold',
-        text:        line2.trim(),
-      },
-      letter_spacing: 1,
-      color: `rgb:${line2Color}`,
-      width: (PLASHKA_W - 40) * os,
-      crop:  'fit',
-    });
-    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line2Text });
-  }
+    // ── SVG plashka background ────────────────────────────────────────────────
+    if (line2?.trim()) {
+      const type    = plashkaType(plashkaStyle, !!line3?.trim());
+      const plashId = plashkaPublicIds?.[type]?.[accentColor];
 
-  // ── LAYER 5 — Line 3 text on pill (style A only) ─────────────────────────────
-  if (line3?.trim() && plashkaStyle !== 'bordered') {
-    t.push({
-      overlay: {
-        font_family: 'Cairo',
-        font_size:   fs3,
-        font_weight: 'bold',
-        text:        line3.trim(),
-      },
-      color: `rgb:${hex}`,
-      width: 420 * os,
-      crop:  'fit',
-    });
-    t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line3Text });
+      if (plashId) {
+        t.push({ overlay: cldId(plashId), width: PLASHKA_W * os });
+        t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.plashka });
+      }
+
+      // ── Line 2 text on plashka ──────────────────────────────────────────────
+      const line2Color = plashkaStyle === 'bordered' ? 'ffffff' : textHex;
+      t.push({
+        overlay: {
+          font_family: pickFont(line2, fontFamily),
+          font_size:   fs2,
+          font_weight: 'bold',
+          text:        line2.trim(),
+        },
+        letter_spacing: 1,
+        color: `rgb:${line2Color}`,
+        width: (PLASHKA_W - 40) * os,
+        crop:  'fit',
+      });
+      t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line2Text });
+    }
+
+    // ── Line 3 text on pill (style A only) ───────────────────────────────────
+    if (line3?.trim() && plashkaStyle !== 'bordered') {
+      t.push({
+        overlay: {
+          font_family: 'Cairo',
+          font_size:   fs3,
+          font_weight: 'bold',
+          text:        line3.trim(),
+        },
+        color: `rgb:${hex}`,
+        width: 420 * os,
+        crop:  'fit',
+      });
+      t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: Y.line3Text });
+    }
   }
 
   return cloudinary.url(imagePublicId, {
