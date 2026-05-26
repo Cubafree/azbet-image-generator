@@ -100,6 +100,7 @@ function buildOverlayUrl(imagePublicId, params) {
     fontSize     = {},
     imageSize    = 'portrait',
     customY      = {},
+    noFrame      = false,
   } = params;
 
   const { hex, textHex } = ACCENT_MAP[accentColor] || ACCENT_MAP.cyan;
@@ -123,7 +124,7 @@ function buildOverlayUrl(imagePublicId, params) {
 
   // ── LAYER 0 — App-store badge panel (south) ──────────────────────────────────
   const frameId = framePublicIds?.[accentColor];
-  if (frameId) {
+  if (frameId && !noFrame) {
     t.push({ overlay: cldId(frameId), width: 614 * os });
     t.push({ flags: 'layer_apply', gravity: 'south', y: Y.frameY });
   }

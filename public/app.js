@@ -49,6 +49,9 @@ const I18N = {
     noTextMode: '🖼 Без баннера — только картинка',
     noTextModeHint: 'Логотип + иконки приложений, без плашки и текста',
     noTextSummary: 'без текста',
+    noFrameMode: '📵 Без нижней плашки с иконками',
+    noFrameModeHint: 'Убирает панель App Store / Google Play снизу',
+    noFrameSummary: 'без фрейма',
   },
   en: {
     badge: 'Internal tool',
@@ -97,6 +100,9 @@ const I18N = {
     noTextMode: '🖼 No banner — image only',
     noTextModeHint: 'Logo + app badges, no plashka or text',
     noTextSummary: 'no text',
+    noFrameMode: '📵 No bottom badge panel',
+    noFrameModeHint: 'Removes the App Store / Google Play panel at the bottom',
+    noFrameSummary: 'no frame',
   },
 };
 
@@ -161,6 +167,7 @@ function onVisualChange() {
   const size    = getRadioValue('imageSize')   || 'portrait';
   const style   = getRadioValue('plashkaStyle');
   const noText  = document.getElementById('noTextMode')?.checked;
+  const noFrame = document.getElementById('noFrameMode')?.checked;
 
   const colorNames = { cyan: 'Cyan', green: 'Green', purple: 'Purple', gold: 'Gold' };
   const sizeNames  = { portrait: '9:16', square: '1:1', landscape: '16:9 · 4K' };
@@ -168,7 +175,8 @@ function onVisualChange() {
   const parts = [
     colorNames[color] || capFirst(color),
     sizeNames[size]   || size,
-    noText ? t('noTextSummary') : (style ? capFirst(style) : null),
+    noText  ? t('noTextSummary')  : (style ? capFirst(style) : null),
+    noFrame ? t('noFrameSummary') : null,
   ].filter(Boolean);
 
   const el = document.getElementById('sumVisual');
@@ -205,6 +213,13 @@ function onNoTextModeChange() {
     const el = document.getElementById(id);
     if (el) el.style.opacity = noText ? '0.2' : '';
   });
+}
+
+function onNoFrameModeChange() {
+  const noFrame = document.getElementById('noFrameMode')?.checked;
+  // Dim the frame element in the skeleton
+  const skFrame = document.getElementById('skFrame');
+  if (skFrame) skFrame.style.opacity = noFrame ? '0.2' : '';
 }
 
 function onFontSummaryChange() {
@@ -691,7 +706,8 @@ async function generate() {
     line3: parseInt(document.getElementById('size3').value) || 44,
   };
   const customY  = skCollectCustomY();
-  const noText   = document.getElementById('noTextMode')?.checked || false;
+  const noText   = document.getElementById('noTextMode')?.checked  || false;
+  const noFrame  = document.getElementById('noFrameMode')?.checked || false;
   const variants = noText ? null : collectAllVariants();
 
   if (!noText && !variants[0]?.line2) {
@@ -708,7 +724,8 @@ async function generate() {
       vertical, country, subject, sportType, accentColor,
       scenePrompt, imageSize, fontFamily, fontSize, plashkaStyle,
       ...(noText   ? { noText: true }  : { variants }),
-      ...(customY  ? { customY }        : {}),
+      ...(noFrame  ? { noFrame: true } : {}),
+      ...(customY  ? { customY }       : {}),
     };
 
     const res  = await fetch('/api/generate', {

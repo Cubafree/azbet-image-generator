@@ -53,6 +53,7 @@ router.post('/', async (req, res) => {
     customY    = {},
     variants   = null,
     noText     = false,
+    noFrame    = false,
     // legacy single-variant fields (fallback)
     line1, line2, line3,
   } = req.body;
@@ -66,7 +67,7 @@ router.post('/', async (req, res) => {
 
   log('GENERATE request', {
     vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, fontFamily,
-    noText, variantCount: textVariants.length,
+    noText, noFrame, variantCount: textVariants.length,
   });
 
   try {
@@ -97,6 +98,7 @@ router.post('/', async (req, res) => {
         fontSize,
         imageSize,
         customY,
+        noFrame,
       };
       const finalUrl = buildOverlayUrl(publicId, overlayParams);
       log('OVERLAY URL built', { line2: line2val, finalUrl });
