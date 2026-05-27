@@ -321,7 +321,12 @@ function onVisualChange() {
 
 // ── No-text mode ──────────────────────────────────────────────────────────────
 function onNoTextModeChange() {
-  const noText      = document.getElementById('noTextMode')?.checked;
+  const noText = document.getElementById('noTextMode')?.checked;
+  // Mutually exclusive with preset banner
+  if (noText) {
+    const pbCb = document.getElementById('presetBannerMode');
+    if (pbCb?.checked) { pbCb.checked = false; onPresetBannerChange(); }
+  }
   const textFields  = document.getElementById('textOverlayFields');
   const styleGroup  = document.getElementById('plashkaStyleGroup');
   const accFont     = document.getElementById('accFont');
@@ -361,6 +366,12 @@ function onPresetBannerChange() {
   const cb      = document.getElementById('presetBannerMode');
   const preset  = cb?.checked || false;
   const country = getRadioValue('country');
+
+  // Mutually exclusive with no-text mode
+  if (preset) {
+    const ntCb = document.getElementById('noTextMode');
+    if (ntCb?.checked) { ntCb.checked = false; onNoTextModeChange(); }
+  }
 
   // Libya has no preset — block and warn
   if (preset && !PRESET_BANNER_COUNTRIES.has(country)) {
