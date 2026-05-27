@@ -559,11 +559,11 @@ function skInit() {
   document.getElementById('skCanvas').style.height = canvasH + 'px';
   skPositions = {};
 
-  // Reset element widths to defaults (clear any resize overrides)
+  // Reset element widths/heights to defaults (clear any resize overrides)
   const ID_BY_LAYER = { logo:'skLogo', line1:'skLine1', plashka:'skPlashka', pill:'skPill', frame:'skFrame', presetBanner:'skPresetBanner' };
   Object.entries(SK_W_DEFAULTS).forEach(([layer, w]) => {
     const el = document.getElementById(ID_BY_LAYER[layer]);
-    if (el) el.style.width = w + 'px';
+    if (el) { el.style.width = w + 'px'; el.style.height = ''; }
   });
 
   skPlace('skLogo',    d.logo    * skScale);
@@ -725,7 +725,7 @@ function makeResizable(elId, layer) {
 
   const handle = document.createElement('div');
   handle.className = 'sk-resize-handle';
-  handle.title = 'Resize width';
+  handle.title = 'Resize proportionally';
   el.appendChild(handle);
 
   handle.addEventListener('mousedown', startResize);
@@ -734,8 +734,11 @@ function makeResizable(elId, layer) {
   function startResize(e) {
     e.preventDefault();
     e.stopPropagation(); // don't trigger parent vertical drag
+
     const startX = e.touches ? e.touches[0].clientX : e.clientX;
+    const startY = e.touches ? e.touches[0].clientY : e.clientY;
     const startW = el.offsetWidth;
+    const startH = el.offsetHeight;
 
     el.classList.add('is-resizing');
     const tip = document.createElement('div');
@@ -743,11 +746,17 @@ function makeResizable(elId, layer) {
     el.appendChild(tip);
 
     function onMove(e) {
-      const dx   = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
-      const newW = Math.max(30, Math.min(252, startW + dx * 2));
-      el.style.width = newW + 'px';
+      const dx = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+      const dy = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+      // Diagonal drag: right/down = larger, left/up = smaller
+      const drag = (dx - dy) / 2;
+      const scale = Math.max(0.15, 1 + drag * 2 / startW);
+      const newW = Math.max(20, Math.min(252, Math.round(startW * scale)));
+      const newH = Math.max(6,              Math.round(startH * scale));
+      el.style.width  = newW + 'px';
+      el.style.height = newH + 'px';
       const normW = Math.round(newW * 4);
-      tip.textContent = `w: ${normW}px`;
+      tip.textContent = `×${scale.toFixed(2)}`;
       updateCustomBadge();
     }
 

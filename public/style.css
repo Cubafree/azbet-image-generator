@@ -687,19 +687,26 @@ td:nth-child(2), td:nth-child(3) {
 
 .sk-resize-handle {
   position: absolute;
-  right: -3px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 18px;
-  cursor: ew-resize;
-  border-radius: 3px;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nwse-resize;
+  border-bottom-right-radius: 3px;
   background: var(--accent);
   opacity: 0;
   transition: opacity .15s;
   z-index: 5;
 }
-.sk-elem:hover .sk-resize-handle { opacity: 0.75; }
+.sk-resize-handle::after {
+  content: '';
+  position: absolute;
+  right: 1px; bottom: 1px;
+  width: 5px; height: 5px;
+  border-right: 2px solid rgba(0,0,0,0.5);
+  border-bottom: 2px solid rgba(0,0,0,0.5);
+}
+.sk-elem:hover .sk-resize-handle { opacity: 0.8; }
 .sk-elem.is-resizing .sk-resize-handle { opacity: 1; }
 
 .sk-tooltip {
