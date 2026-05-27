@@ -87,8 +87,7 @@ Background gradient accent: very dark brown-black (#0d0800) with warm amber/gold
 - Western party/nightclub aesthetic
 DO NOT render any text, numbers, words, or logos anywhere in the image.
 
-ANATOMY — CRITICAL QUALITY REQUIREMENT:
-Every visible hand must have exactly 5 anatomically correct fingers — no extra fingers, no missing fingers, no fused or merged digits, no unnaturally bent joints. If a person is holding a phone, the grip must be completely natural and realistic: thumb on one side, four fingers on the other, all fingers clearly defined and properly proportioned. Incorrect hand anatomy is unacceptable — treat this as the highest priority technical requirement.`,
+QUALITY REQUIREMENT — HANDS: All hands must look natural and realistic with correct finger count. Pay close attention to finger anatomy — ensure each hand has the right number of properly shaped, distinct fingers with natural proportions and joints. When a person holds any object, the grip must look natural and believable.`,
 
   CASINO_THEMES: {
     egypt: {
