@@ -517,6 +517,9 @@ function getSkScale() {
 // Element heights in canvas px
 const SK_H = { logo: 15, line1: 13, plashka: 25, pill: 17, frame: 34, presetBanner: 48 };
 
+// Default element widths in canvas px (canvas_px * 4 = portrait-normalised image px)
+const SK_W_DEFAULTS = { logo: 60, line1: 225, plashka: 170, pill: 115, frame: 154, presetBanner: 192 };
+
 // Countries that have a preset banner SVG
 const PRESET_BANNER_COUNTRIES = new Set(['egypt', 'morocco', 'algeria']);
 
@@ -544,6 +547,13 @@ function skInit() {
 
   document.getElementById('skCanvas').style.height = canvasH + 'px';
   skPositions = {};
+
+  // Reset element widths to defaults (clear any resize overrides)
+  const ID_BY_LAYER = { logo:'skLogo', line1:'skLine1', plashka:'skPlashka', pill:'skPill', frame:'skFrame', presetBanner:'skPresetBanner' };
+  Object.entries(SK_W_DEFAULTS).forEach(([layer, w]) => {
+    const el = document.getElementById(ID_BY_LAYER[layer]);
+    if (el) el.style.width = w + 'px';
+  });
 
   skPlace('skLogo',    d.logo    * skScale);
   skPlace('skLine1',   d.line1   * skScale);
@@ -681,6 +691,70 @@ function skCollectCustomY() {
   if (skPositions.presetBanner !== undefined) out.presetBanner = skPositions.presetBanner;
 
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function skCollectCustomW() {
+  const out = {};
+  const defaults = SK_W_DEFAULTS;
+  const ID_BY_LAYER = { logo:'skLogo', line1:'skLine1', plashka:'skPlashka', pill:'skPill', frame:'skFrame', presetBanner:'skPresetBanner' };
+  Object.entries(ID_BY_LAYER).forEach(([layer, elId]) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const currentW = el.offsetWidth || parseInt(el.style.width) || 0;
+    const normW = Math.round(currentW * 4); // canvas px → portrait-normalised px
+    const defaultNorm = defaults[layer] * 4;
+    if (Math.abs(normW - defaultNorm) > 2) out[layer] = normW;
+  });
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function makeResizable(elId, layer) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+
+  const handle = document.createElement('div');
+  handle.className = 'sk-resize-handle';
+  handle.title = 'Resize width';
+  el.appendChild(handle);
+
+  handle.addEventListener('mousedown', startResize);
+  handle.addEventListener('touchstart', startResize, { passive: false });
+
+  function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation(); // don't trigger parent vertical drag
+    const startX = e.touches ? e.touches[0].clientX : e.clientX;
+    const startW = el.offsetWidth;
+
+    el.classList.add('is-resizing');
+    const tip = document.createElement('div');
+    tip.className = 'sk-tooltip';
+    el.appendChild(tip);
+
+    function onMove(e) {
+      const dx   = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+      const newW = Math.max(30, Math.min(252, startW + dx * 2));
+      el.style.width = newW + 'px';
+      const normW = Math.round(newW * 4);
+      tip.textContent = `w: ${normW}px`;
+      updateCustomBadge();
+    }
+
+    function onUp() {
+      el.classList.remove('is-resizing');
+      tip.remove();
+      updateCustomBadge();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
 }
 
 function backToSkeleton() {
@@ -897,13 +971,14 @@ async function generate() {
     line3: parseInt(document.getElementById('size3').value) || 44,
   };
   const customY      = skCollectCustomY();
+  const customW      = skCollectCustomW();
   const noText       = document.getElementById('noTextMode')?.checked      || false;
   const noFrame      = document.getElementById('noFrameMode')?.checked     || false;
   const presetBanner = document.getElementById('presetBannerMode')?.checked || false;
   const variants     = (noText || presetBanner) ? null : collectAllVariants();
   const themes       = collectThemes();
 
-  if (!noText && !variants[0]?.line2) {
+  if (!noText && !presetBanner && !variants?.[0]?.line2) {
     showToast(t('toastLine2Required'), 'error');
     return;
   }
@@ -921,6 +996,7 @@ async function generate() {
       ...(!noText && !presetBanner ? { variants } : {}),
       ...(noFrame           ? { noFrame: true }    : {}),
       ...(customY           ? { customY }          : {}),
+      ...(customW           ? { customW }          : {}),
       ...(themes.length > 0 ? { themes }           : {}),
     };
 
@@ -1158,7 +1234,10 @@ skInit();
 
 ['skLogo','skLine1','skPlashka','skPill','skFrame','skPresetBanner'].forEach((id) => {
   const layer = document.getElementById(id)?.dataset.layer;
-  if (layer) makeDraggable(id, layer);
+  if (layer) {
+    makeDraggable(id, layer);
+    makeResizable(id, layer);
+  }
 });
 
 onFontChange('Oswald');

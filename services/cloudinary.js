@@ -114,6 +114,7 @@ function buildOverlayUrl(imagePublicId, params) {
     fontSize     = {},
     imageSize     = 'portrait',
     customY       = {},
+    customW       = {},
     noFrame       = false,
     presetBanner  = false,
     country       = null,
@@ -157,7 +158,9 @@ function buildOverlayUrl(imagePublicId, params) {
   if (presetId) {
     // Pre-designed country banner replaces all text/plashka layers
     const bannerY = customY.presetBanner ?? (PRESET_BANNER_DEFAULT_Y[imageSize] || 400);
-    t.push({ overlay: cldId(presetId), width: 1024 * os });
+    // Default 75% of 1024 = 768px; customW.presetBanner is portrait-normalised px
+    const bannerW = (customW.presetBanner ?? 768) * os;
+    t.push({ overlay: cldId(presetId), width: bannerW });
     t.push({ flags: 'layer_apply', gravity: 'north', x: 0, y: bannerY });
   } else {
     // ── Line 1: plain white text ──────────────────────────────────────────────
