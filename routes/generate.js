@@ -94,9 +94,8 @@ router.post('/', async (req, res) => {
   });
 
   try {
-    const generations = [];
-
-    for (const theme of themesToProcess) {
+    // Process themes in parallel — avoids Railway's 5-min HTTP timeout on multi-theme jobs
+    const perThemeResults = await Promise.all(themesToProcess.map(async (theme) => {
       const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt, theme });
       log('PROMPT built', { theme, userPromptLength: userPrompt.length });
 
@@ -107,6 +106,7 @@ router.post('/', async (req, res) => {
       const publicId = uploadResult.public_id;
       log('IMAGE uploaded', { theme, publicId });
 
+      const themeGenerations = [];
       for (const v of textVariants) {
         // banner_text is NOT NULL in DB — use empty string sentinel for noText mode
         const line2val    = v.line2?.trim() || null;
@@ -148,10 +148,13 @@ router.post('/', async (req, res) => {
             imageSize, fontFamily,
           ]
         );
-        generations.push(rows[0]);
+        themeGenerations.push(rows[0]);
         log('DB saved', { theme, id: rows[0].id });
       }
-    }
+      return themeGenerations;
+    }));
+
+    const generations = perThemeResults.flat();
 
     // Send all to Telegram
     for (let i = 0; i < generations.length; i++) {

@@ -136,7 +136,7 @@ function buildOverlayUrl(imagePublicId, params) {
 
   // ── STEP 0 — Resize to final canvas (landscape only) ─────────────────────────
   if (imageSize === 'landscape') {
-    t.push({ width: 4096, height: 2286, crop: 'fill', gravity: 'center' });
+    t.push({ width: 4096, height: 2286, crop: 'fill', gravity: 'auto' });
   }
 
   // ── LAYER 0 — App-store badge panel (south) ──────────────────────────────────
