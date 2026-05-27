@@ -85,7 +85,10 @@ Background gradient accent: very dark brown-black (#0d0800) with warm amber/gold
 - Violence, weapons, blood
 - LGBTQ+ themes or symbolism
 - Western party/nightclub aesthetic
-DO NOT render any text, numbers, words, or logos anywhere in the image.`,
+DO NOT render any text, numbers, words, or logos anywhere in the image.
+
+ANATOMY — CRITICAL QUALITY REQUIREMENT:
+Every visible hand must have exactly 5 anatomically correct fingers — no extra fingers, no missing fingers, no fused or merged digits, no unnaturally bent joints. If a person is holding a phone, the grip must be completely natural and realistic: thumb on one side, four fingers on the other, all fingers clearly defined and properly proportioned. Incorrect hand anatomy is unacceptable — treat this as the highest priority technical requirement.`,
 
   CASINO_THEMES: {
     egypt: {
