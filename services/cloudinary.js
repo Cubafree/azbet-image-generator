@@ -223,6 +223,13 @@ function buildOverlayUrl(imagePublicId, params) {
     }
   }
 
+  // Final output resize — portrait → 1080×1920 (9:16), landscape → 1920×1080
+  if (imageSize === 'portrait') {
+    t.push({ width: 1080, height: 1920, crop: 'fill', gravity: 'center' });
+  } else if (imageSize === 'landscape') {
+    t.push({ width: 1920, height: 1080, crop: 'fill', gravity: 'center' });
+  }
+
   return cloudinary.url(imagePublicId, {
     transformation: t,
     format:         'jpg',
