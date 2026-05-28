@@ -24,11 +24,11 @@ const THEMES_BY_COUNTRY = {
 };
 
 function validate(body) {
-  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText, presetBanner, themes } = body;
+  const { vertical, country, subject, sportType, accentColor, plashkaStyle, imageSize, variants, line2, noText, presetBanner, themes, allColors } = body;
   if (!VALID.vertical.includes(vertical))       return `vertical must be one of: ${VALID.vertical.join(', ')}`;
   if (!VALID.country.includes(country))         return `country must be one of: ${VALID.country.join(', ')}`;
   if (!VALID.subject.includes(subject))         return `subject must be one of: ${VALID.subject.join(', ')}`;
-  if (!VALID.accentColor.includes(accentColor)) return `accentColor must be one of: ${VALID.accentColor.join(', ')}`;
+  if (!allColors && !VALID.accentColor.includes(accentColor)) return `accentColor must be one of: ${VALID.accentColor.join(', ')}`;
   if (imageSize && !VALID.imageSize.includes(imageSize)) return `imageSize must be one of: ${VALID.imageSize.join(', ')}`;
   if (vertical === 'sport' && subject !== 'object' && !VALID.sportType.includes(sportType)) {
     return `sportType must be one of: ${VALID.sportType.join(', ')} when vertical=sport and subject≠object`;
@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
   if (validationError) return res.status(400).json({ error: validationError });
 
   const {
-    vertical, country, subject, sportType, accentColor,
+    vertical, country, subject, sportType,
     scenePrompt, plashkaStyle,
     imageSize  = 'portrait',
     fontFamily = 'Oswald',
@@ -74,9 +74,14 @@ router.post('/', async (req, res) => {
     noFrame       = false,
     presetBanner  = false,
     themes        = null,
+    allColors     = false,
     // legacy single-variant fields (fallback)
     line1, line2, line3,
   } = req.body;
+
+  // allColors: generate one image, apply all 4 accent colours as separate overlay URLs
+  const accentColor  = req.body.accentColor || 'cyan';
+  const colorsToRun  = allColors ? VALID.accentColor : [accentColor];
 
   // noText / presetBanner: single blank variant (text layers skipped in cloudinary)
   const textVariants = (noText || presetBanner)
@@ -115,41 +120,43 @@ router.post('/', async (req, res) => {
           ? `[theme:${theme}]${scenePrompt?.trim() ? ` ${scenePrompt.trim()}` : ''}`
           : (scenePrompt?.trim() || null);
 
-        const overlayParams = {
-          accentColor,
-          plashkaStyle,
-          line1:        v.line1?.trim() || null,
-          line2:        line2val,
-          line3:        v.line3?.trim() || null,
-          fontFamily,
-          fontSize,
-          imageSize,
-          customY,
-          customW,
-          noFrame,
-          presetBanner,
-          country,
-        };
-        const finalUrl = buildOverlayUrl(publicId, overlayParams);
-        log('OVERLAY URL built', { theme, line2: line2val, finalUrl });
+        for (const color of colorsToRun) {
+          const overlayParams = {
+            accentColor:  color,
+            plashkaStyle,
+            line1:        v.line1?.trim() || null,
+            line2:        line2val,
+            line3:        v.line3?.trim() || null,
+            fontFamily,
+            fontSize,
+            imageSize,
+            customY,
+            customW,
+            noFrame,
+            presetBanner,
+            country,
+          };
+          const finalUrl = buildOverlayUrl(publicId, overlayParams);
+          log('OVERLAY URL built', { theme, color, line2: line2val, finalUrl });
 
-        const { rows } = await pool.query(
-          `INSERT INTO generations
-             (prompt, banner_text, cloudinary_public_id, final_url, status,
-              vertical, country, subject, sport_type, accent_color, scene_prompt,
-              plashka_style, line1, line2, line3, image_size, font_family)
-           VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-          [
-            userPrompt, bannerText, publicId, finalUrl,
-            vertical, country, subject,
-            vertical === 'sport' ? (sportType || null) : null,
-            accentColor, scenePromptStored,
-            plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
-            imageSize, fontFamily,
-          ]
-        );
-        themeGenerations.push(rows[0]);
-        log('DB saved', { theme, id: rows[0].id });
+          const { rows } = await pool.query(
+            `INSERT INTO generations
+               (prompt, banner_text, cloudinary_public_id, final_url, status,
+                vertical, country, subject, sport_type, accent_color, scene_prompt,
+                plashka_style, line1, line2, line3, image_size, font_family)
+             VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+            [
+              userPrompt, bannerText, publicId, finalUrl,
+              vertical, country, subject,
+              vertical === 'sport' ? (sportType || null) : null,
+              color, scenePromptStored,
+              plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
+              imageSize, fontFamily,
+            ]
+          );
+          themeGenerations.push(rows[0]);
+          log('DB saved', { theme, color, id: rows[0].id });
+        }
       }
       return themeGenerations;
     }));

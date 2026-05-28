@@ -14,6 +14,8 @@ const I18N = {
     football: '⚽ Футбол', tennis: '🎾 Теннис', basketball: '🏀 Баскетбол', general: '🏆 Универсальный',
     colorLabel: 'Акцентный цвет',
     colorBlue: 'Синий', colorGreen: 'Зелёный', colorPurple: 'Фиолетовый', colorGold: 'Золотой',
+    allColorsMode: '✦ Все 4 цвета сразу',
+    allColorsSummary: '4 цвета',
     sizeLabel: 'Размер изображения',
     sizePortrait: '📱 Портрет 9:16', sizeSquare: '⬛ Квадрат 1:1', sizeLandscape: '📺 Горизонт. 16:9',
     sceneLabel: 'Описание сцены', optional: 'необязательно',
@@ -74,6 +76,8 @@ const I18N = {
     football: '⚽ Football', tennis: '🎾 Tennis', basketball: '🏀 Basketball', general: '🏆 General',
     colorLabel: 'Accent color',
     colorBlue: 'Blue', colorGreen: 'Green', colorPurple: 'Purple', colorGold: 'Gold',
+    allColorsMode: '✦ All 4 colors at once',
+    allColorsSummary: '4 colors',
     sizeLabel: 'Image size',
     sizePortrait: '📱 Portrait 9:16', sizeSquare: '⬛ Square 1:1', sizeLandscape: '📺 Landscape 16:9',
     sceneLabel: 'Scene description', optional: 'optional',
@@ -295,9 +299,22 @@ function onThemeChange() {
   renderThemePicker();
 }
 
+// ── All-4-colors toggle ───────────────────────────────────────────────────────
+function onAllColorsModeChange() {
+  const allColors = document.getElementById('allColorsMode')?.checked;
+  const colorGroup = document.getElementById('colorGroup');
+  if (colorGroup) {
+    colorGroup.style.opacity      = allColors ? '0.35' : '';
+    colorGroup.style.pointerEvents = allColors ? 'none' : '';
+    colorGroup.style.userSelect    = allColors ? 'none' : '';
+  }
+  onVisualChange();
+}
+
 function onVisualChange() {
   updateSkeletonColor();
 
+  const allColors    = document.getElementById('allColorsMode')?.checked;
   const color        = getRadioValue('accentColor') || 'cyan';
   const size         = getRadioValue('imageSize')   || 'portrait';
   const style        = getRadioValue('plashkaStyle');
@@ -309,7 +326,7 @@ function onVisualChange() {
   const sizeNames  = { portrait: '9:16', square: '1:1', landscape: '16:9 · 4K' };
 
   const parts = [
-    colorNames[color] || capFirst(color),
+    allColors ? t('allColorsSummary') : (colorNames[color] || capFirst(color)),
     sizeNames[size]   || size,
     presetBanner ? t('presetBannerSummary') : (noText ? t('noTextSummary') : (style ? capFirst(style) : null)),
     noFrame ? t('noFrameSummary') : null,
@@ -980,7 +997,8 @@ async function generate() {
   const country      = getRadioValue('country');
   const subject      = getRadioValue('subject');
   const sportType    = getRadioValue('sportType');
-  const accentColor  = getRadioValue('accentColor');
+  const allColors    = document.getElementById('allColorsMode')?.checked || false;
+  const accentColor  = allColors ? 'cyan' : (getRadioValue('accentColor') || 'cyan');
   const imageSize    = getRadioValue('imageSize') || 'portrait';
   const scenePrompt  = document.getElementById('scenePrompt').value.trim();
   const plashkaStyle = getRadioValue('plashkaStyle');
@@ -1011,6 +1029,7 @@ async function generate() {
     const body = {
       vertical, country, subject, sportType, accentColor,
       scenePrompt, imageSize, fontFamily, fontSize, plashkaStyle,
+      ...(allColors         ? { allColors: true }  : {}),
       ...(noText        ? { noText: true }        : {}),
       ...(presetBanner  ? { presetBanner: true }  : {}),
       ...(!noText && !presetBanner ? { variants } : {}),
@@ -1036,7 +1055,7 @@ async function generate() {
     if (gens.length === 1) {
       showPreview(gens[0]);
     } else {
-      showVariantResults(gens);
+      showVariantResults(gens, allColors);
     }
     loadHistory();
     showToast(t('toastGenerated'), 'success');
@@ -1140,9 +1159,17 @@ function hidePreview() {
 }
 
 // ── Multi-variant results ─────────────────────────────────────────────────────
-function showVariantResults(generations) {
+const COLOR_LABELS = { cyan: '🔵 Синий', green: '🟢 Зелёный', purple: '🟣 Фиолетовый', gold: '🟡 Золотой' };
+const COLOR_LABELS_EN = { cyan: '🔵 Blue', green: '🟢 Green', purple: '🟣 Purple', gold: '🟡 Gold' };
+
+function showVariantResults(generations, isAllColors = false) {
   document.getElementById('skeletonPanel').classList.add('hidden');
   document.getElementById('previewSection').classList.add('hidden');
+
+  // Detect if all 4 unique colors are present → color mode display
+  const uniqueColors = [...new Set(generations.map(g => g.accent_color))];
+  const colorMode = isAllColors || uniqueColors.length === 4;
+  const clabels   = lang === 'ru' ? COLOR_LABELS : COLOR_LABELS_EN;
 
   const sec = document.getElementById('variantsSection');
   sec.innerHTML = `
@@ -1153,24 +1180,28 @@ function showVariantResults(generations) {
       <button class="btn-reset-pos" onclick="backToSkeleton()">← ${lang === 'ru' ? 'Назад' : 'Back'}</button>
     </div>
     <div class="variants-list">
-      ${generations.map((g, i) => `
+      ${generations.map((g, i) => {
+        const label = colorMode
+          ? (clabels[g.accent_color] || g.accent_color)
+          : `${lang === 'ru' ? 'Текст' : 'Text'} ${i + 1}`;
+        return `
         <div class="variant-result-card" id="vrc_${g.id}">
           <a class="vrc-thumb" href="${escHtml(g.final_url)}" target="_blank">
-            <img src="${escHtml(g.final_url)}" alt="Вариант ${i + 1}" />
+            <img src="${escHtml(g.final_url)}" alt="${label}" />
           </a>
           <div class="vrc-body">
-            <span class="vrc-label">${lang === 'ru' ? 'Текст' : 'Text'} ${i + 1}</span>
+            <span class="vrc-label">${label}</span>
             <span class="vrc-line2">${escHtml(g.line2 || g.banner_text || '')}</span>
             <div class="vrc-actions">
               <button class="btn btn-confirm vrc-btn" id="vrc_confirm_${g.id}"
                 onclick="confirmGenById(${g.id})">✓ ${lang === 'ru' ? 'Подтвердить' : 'Confirm'}</button>
-              <a href="${escHtml(g.final_url)}" download="banner_v${i + 1}.jpg"
+              <a href="${escHtml(g.final_url)}" download="banner_${g.accent_color || 'v' + (i+1)}.jpg"
                 class="btn btn-download vrc-btn">↓</a>
               <a href="${escHtml(g.final_url)}" target="_blank" class="table-url vrc-url">URL ↗</a>
             </div>
           </div>
-        </div>
-      `).join('')}
+        </div>`;
+      }).join('')}
     </div>
     <button class="btn btn-secondary" onclick="backToSkeleton()" style="margin-top:12px">
       ← ${lang === 'ru' ? 'Редактировать расположение' : 'Edit layout'}

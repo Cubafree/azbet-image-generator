@@ -133,6 +133,10 @@
             <div class="acc-fields">
 
               <span class="field-label" data-i18n="colorLabel">Акцентный цвет</span>
+              <label class="toggle-label all-colors-toggle" style="margin-bottom:6px">
+                <input type="checkbox" id="allColorsMode" onchange="onAllColorsModeChange()" />
+                <span data-i18n="allColorsMode">✦ Все 4 цвета сразу</span>
+              </label>
               <div class="color-group" id="colorGroup">
                 <label class="color-card">
                   <input type="radio" name="accentColor" value="cyan" checked onchange="onVisualChange()" />
