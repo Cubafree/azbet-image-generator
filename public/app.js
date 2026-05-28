@@ -1,4 +1,6 @@
 let currentGenerationId = null;
+let historyPage = 1;
+const HISTORY_PAGE_SIZE = 50;
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const I18N = {
@@ -35,6 +37,7 @@ const I18N = {
     colVertical: 'Вертикаль', colCountry: 'Страна',
     colLine2: 'Строка 2', colStatus: 'Статус', colCreated: 'Создано',
     emptyHistory: 'Генераций пока нет',
+    historyPageInfo: (page, total, limit) => `${(page-1)*limit+1}–${Math.min(page*limit,total)} из ${total}`,
     skTitle: 'Расположение слоёв', skReset: '↺ Сброс',
     skLogo: 'Logo', skLine1: 'Строка 1', skLine2: 'Строка 2', skLine3: 'Строка 3', skBadges: 'Badges',
     skHint: 'Перетаскивайте элементы · позиции передаются в генерацию',
@@ -94,6 +97,7 @@ const I18N = {
     resultTitle: 'Result', confirmBtn: '✓ Confirm', regenBtn: '↻ Regenerate',
     downloadBtn: '↓ Download', backToLayout: '← Edit layout',
     historyTitle: 'Generation history',
+    historyPageInfo: (page, total, limit) => `${(page-1)*limit+1}–${Math.min(page*limit,total)} of ${total}`,
     colVertical: 'Vertical', colCountry: 'Country',
     colLine2: 'Line 2', colStatus: 'Status', colCreated: 'Created',
     emptyHistory: 'No generations yet',
@@ -1057,7 +1061,7 @@ async function generate() {
     } else {
       showVariantResults(gens, allColors);
     }
-    loadHistory();
+    loadHistory(1);
     showToast(t('toastGenerated'), 'success');
   } catch (err) {
     showError(err.message);
@@ -1073,7 +1077,7 @@ async function confirmGen() {
     const res  = await fetch(`/api/generate/${currentGenerationId}/confirm`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    loadHistory();
+    loadHistory(1);
     showToast(t('toastConfirmed'), 'success');
   } catch (err) {
     showToast(err.message, 'error');
@@ -1092,7 +1096,7 @@ async function regenerate() {
     if (!res.ok) throw new Error(data.error || t('errorRegen'));
     currentGenerationId = data.generation.id;
     showPreview(data.generation);
-    loadHistory();
+    loadHistory(1);
     showToast(t('toastRegenerated'), 'success');
   } catch (err) {
     showError(err.message);
@@ -1102,12 +1106,33 @@ async function regenerate() {
 }
 
 // ── History ───────────────────────────────────────────────────────────────────
-async function loadHistory() {
+async function loadHistory(page) {
+  if (page !== undefined) historyPage = page;
   try {
-    const res = await fetch('/api/generations');
-    const { generations } = await res.json();
-    renderTable(generations);
+    const res  = await fetch(`/api/generations?page=${historyPage}&limit=${HISTORY_PAGE_SIZE}`);
+    const data = await res.json();
+    renderTable(data.generations || []);
+    renderPagination(data.page || historyPage, data.total || 0, data.limit || HISTORY_PAGE_SIZE);
   } catch { /* silent */ }
+}
+
+function renderPagination(page, total, limit) {
+  const el = document.getElementById('historyPagination');
+  if (!el) return;
+
+  const totalPages = Math.ceil(total / limit);
+  if (totalPages <= 1) { el.classList.add('hidden'); return; }
+
+  const pageInfo = typeof I18N[lang]?.historyPageInfo === 'function'
+    ? I18N[lang].historyPageInfo(page, total, limit)
+    : `${page} / ${totalPages}`;
+
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <button class="pg-btn" onclick="loadHistory(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹ Назад</button>
+    <span class="pg-info">${pageInfo}</span>
+    <button class="pg-btn" onclick="loadHistory(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>Вперёд ›</button>
+  `;
 }
 
 function renderTable(rows) {
@@ -1215,7 +1240,7 @@ async function confirmGenById(id) {
     const res  = await fetch(`/api/generate/${id}/confirm`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    loadHistory();
+    loadHistory(1);
     showToast(t('toastConfirmed'), 'success');
     const btn = document.getElementById(`vrc_confirm_${id}`);
     if (btn) { btn.textContent = '✓'; btn.disabled = true; btn.style.opacity = '.5'; }
