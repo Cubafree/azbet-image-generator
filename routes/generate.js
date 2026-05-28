@@ -98,67 +98,59 @@ router.post('/', async (req, res) => {
     noText, noFrame, presetBanner, variantCount: textVariants.length, themeCount: themesToProcess.length,
   });
 
+  // Helper: generate one image + save all text variants for a given color
+  async function generateForColor(color, theme) {
+    const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor: color, scenePrompt, theme });
+    log('PROMPT built', { theme, color, userPromptLength: userPrompt.length });
+
+    const imageBuffer = await generateImage({ systemPrompt, userPrompt, imageSize });
+    log('IMAGE generated', { theme, color, bytes: imageBuffer.length });
+
+    const uploadResult = await uploadImage(imageBuffer);
+    const publicId = uploadResult.public_id;
+    log('IMAGE uploaded', { theme, color, publicId });
+
+    const scenePromptStored = theme
+      ? `[theme:${theme}]${scenePrompt?.trim() ? ` ${scenePrompt.trim()}` : ''}`
+      : (scenePrompt?.trim() || null);
+
+    const colorGenerations = [];
+    for (const v of textVariants) {
+      const line2val   = v.line2?.trim() || null;
+      const bannerText = line2val ?? '';
+      const finalUrl   = buildOverlayUrl(publicId, {
+        accentColor: color, plashkaStyle,
+        line1: v.line1?.trim() || null, line2: line2val, line3: v.line3?.trim() || null,
+        fontFamily, fontSize, imageSize, customY, customW, noFrame, presetBanner, country,
+      });
+      log('OVERLAY URL built', { theme, color, line2: line2val });
+
+      const { rows } = await pool.query(
+        `INSERT INTO generations
+           (prompt, banner_text, cloudinary_public_id, final_url, status,
+            vertical, country, subject, sport_type, accent_color, scene_prompt,
+            plashka_style, line1, line2, line3, image_size, font_family)
+         VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+        [
+          userPrompt, bannerText, publicId, finalUrl,
+          vertical, country, subject,
+          vertical === 'sport' ? (sportType || null) : null,
+          color, scenePromptStored,
+          plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
+          imageSize, fontFamily,
+        ]
+      );
+      colorGenerations.push(rows[0]);
+      log('DB saved', { theme, color, id: rows[0].id });
+    }
+    return colorGenerations;
+  }
+
   try {
-    // Process themes in parallel — avoids Railway's 5-min HTTP timeout on multi-theme jobs
+    // Process themes × colors in parallel — each color gets its own OpenAI image generation
     const perThemeResults = await Promise.all(themesToProcess.map(async (theme) => {
-      const { systemPrompt, userPrompt } = buildPrompt({ vertical, country, subject, sportType, accentColor, scenePrompt, theme });
-      log('PROMPT built', { theme, userPromptLength: userPrompt.length });
-
-      const imageBuffer = await generateImage({ systemPrompt, userPrompt, imageSize });
-      log('IMAGE generated', { theme, bytes: imageBuffer.length, imageSize });
-
-      const uploadResult = await uploadImage(imageBuffer);
-      const publicId = uploadResult.public_id;
-      log('IMAGE uploaded', { theme, publicId });
-
-      const themeGenerations = [];
-      for (const v of textVariants) {
-        // banner_text is NOT NULL in DB — use empty string sentinel for noText mode
-        const line2val    = v.line2?.trim() || null;
-        const bannerText  = line2val ?? '';
-        const scenePromptStored = theme
-          ? `[theme:${theme}]${scenePrompt?.trim() ? ` ${scenePrompt.trim()}` : ''}`
-          : (scenePrompt?.trim() || null);
-
-        for (const color of colorsToRun) {
-          const overlayParams = {
-            accentColor:  color,
-            plashkaStyle,
-            line1:        v.line1?.trim() || null,
-            line2:        line2val,
-            line3:        v.line3?.trim() || null,
-            fontFamily,
-            fontSize,
-            imageSize,
-            customY,
-            customW,
-            noFrame,
-            presetBanner,
-            country,
-          };
-          const finalUrl = buildOverlayUrl(publicId, overlayParams);
-          log('OVERLAY URL built', { theme, color, line2: line2val, finalUrl });
-
-          const { rows } = await pool.query(
-            `INSERT INTO generations
-               (prompt, banner_text, cloudinary_public_id, final_url, status,
-                vertical, country, subject, sport_type, accent_color, scene_prompt,
-                plashka_style, line1, line2, line3, image_size, font_family)
-             VALUES ($1,$2,$3,$4,'pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-            [
-              userPrompt, bannerText, publicId, finalUrl,
-              vertical, country, subject,
-              vertical === 'sport' ? (sportType || null) : null,
-              color, scenePromptStored,
-              plashkaStyle, v.line1?.trim() || null, line2val, v.line3?.trim() || null,
-              imageSize, fontFamily,
-            ]
-          );
-          themeGenerations.push(rows[0]);
-          log('DB saved', { theme, color, id: rows[0].id });
-        }
-      }
-      return themeGenerations;
+      const colorResults = await Promise.all(colorsToRun.map(color => generateForColor(color, theme)));
+      return colorResults.flat();
     }));
 
     const generations = perThemeResults.flat();
