@@ -1,23 +1,28 @@
 require('dotenv').config();
-const express  = require('express');
-const path     = require('path');
+const express   = require('express');
+const path      = require('path');
 const { initDb } = require('./db');
 const apiKeyAuth = require('./middleware/auth');
+const basicAuth  = require('./middleware/basicAuth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Public — no auth
 app.get('/api/health', (_, res) => res.json({ ok: true, service: 'banner-gen' }));
 
-// Protected — require API key
+// Everything else requires Basic Auth (ADMIN_USER / ADMIN_PASSWORD env vars)
+app.use(basicAuth);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Protected — also require API key for mutation routes
 app.use('/api/generate',    apiKeyAuth, require('./routes/generate'));
 app.use('/api/generations', apiKeyAuth, require('./routes/generations'));
 
-// SPA fallback (no auth — serves the internal UI)
+// SPA fallback
 app.get('*', (_, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 initDb()
